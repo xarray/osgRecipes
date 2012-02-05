@@ -1,0 +1,17 @@
+osgRecipes
+=============
+
+The osgRecipes project includes different recipes written with OpenSceneGraph (OSG) and can help developers work with this famous 3D rendering engine, as well as other auxiliary libraries. The osgRecipes project itself is in the Public Domain, but some of its recipes may be under other licenses.
+
+This project is also the source code repository of Rui Wang & Xuelei Qian's book `OpenSceneGraph 3.0 Cookbook`, Packt Publishing, 2012. You may read more details or order this book at:
+http://www.packtpub.com/openscenegrap-3-for-advanced-3d-programming-using-api-cookbook/book
+
+Installation
+------------
+
+To be continued...
+
+Contributing
+------------
+
+Any suggestions and contributions are welcomed all the time. :-)
