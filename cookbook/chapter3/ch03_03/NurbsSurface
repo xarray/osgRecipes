@@ -1,0 +1,66 @@
+/* -*-c++-*- OpenSceneGraph Cookbook
+ * Chapter 3 Recipe 3
+ * Author: Wang Rui <wangray84 at gmail dot com>
+*/
+
+#ifndef H_COOKBOOK_CH3_NURBSSURFACE
+#define H_COOKBOOK_CH3_NURBSSURFACE
+
+#include <osg/Drawable>
+
+class NurbsSurface : public osg::Drawable
+{
+public:
+    NurbsSurface();
+    NurbsSurface( const NurbsSurface& copy, osg::CopyOp copyop=osg::CopyOp::SHALLOW_COPY );
+    META_Object( osg, NurbsSurface );
+    
+    void setVertexArray( osg::Vec3Array* va ) { _vertices = va; }
+    osg::Vec3Array* getVertexArray() { return _vertices.get(); }
+    const osg::Vec3Array* getVertexArray() const { return _vertices.get(); }
+    
+    void setNormalArray( osg::Vec3Array* na ) { _normals = na; }
+    osg::Vec3Array* getNormalArray() { return _normals.get(); }
+    const osg::Vec3Array* getNormalArray() const { return _normals.get(); }
+    
+    void setTexCoordArray( osg::Vec2Array* ta ) { _texcoords = ta; }
+    osg::Vec2Array* getTexCoordArray() { return _texcoords.get(); }
+    const osg::Vec2Array* getTexCoordArray() const { return _texcoords.get(); }
+    
+    void setKnots( osg::FloatArray* sknots, osg::FloatArray* tknots )
+    { _sKnots = sknots; _tKnots = tknots; }
+    
+    osg::FloatArray* getSKnots() { return _sKnots.get(); }
+    const osg::FloatArray* getSKnots() const { return _sKnots.get(); }
+    
+    osg::FloatArray* getTKnots() { return _tKnots.get(); }
+    const osg::FloatArray* getTKnots() const { return _tKnots.get(); }
+    
+    void setCounts( int s, int t ) { _sCount = s; _tCount = t; }
+    int getSCount() const { return _sCount; }
+    int getTCount() const { return _tCount; }
+    
+    void setOrders( int s, int t ) { _sOrder = s; _tOrder = t; }
+    int getSOrder() const { return _sOrder; }
+    int getTOrder() const { return _tOrder; }
+    
+    virtual osg::BoundingBox computeBound() const;
+    
+    virtual void drawImplementation( osg::RenderInfo& renderInfo ) const;
+    
+protected:
+    virtual ~NurbsSurface();
+    
+    osg::ref_ptr<osg::Vec3Array> _vertices;
+    osg::ref_ptr<osg::Vec3Array> _normals;
+    osg::ref_ptr<osg::Vec2Array> _texcoords;
+    osg::ref_ptr<osg::FloatArray> _sKnots;
+    osg::ref_ptr<osg::FloatArray> _tKnots;
+    int _sCount;
+    int _tCount;
+    int _sOrder;
+    int _tOrder;
+    mutable void* _nurbsObj;
+};
+
+#endif

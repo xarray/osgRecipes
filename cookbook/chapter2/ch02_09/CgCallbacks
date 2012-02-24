@@ -1,0 +1,41 @@
+/* -*-c++-*- OpenSceneGraph Cookbook
+ * Chapter 2 Recipe 9
+ * Author: Wang Rui <wangray84 at gmail dot com>
+*/
+
+#ifndef H_COOKBOOK_CH2_CGCALLBACKS
+#define H_COOKBOOK_CH2_CGCALLBACKS
+
+#include <Cg/cg.h>
+#include <Cg/cgGL.h>
+#include <osg/Camera>
+
+class CgDrawCallback : public osg::Camera::DrawCallback
+{
+public:
+    void addProfile( CGprofile profile ) { _profiles.push_back(profile); }
+    void addCompiledProgram( CGprogram prog ) { _programs.push_back(prog); }
+    
+protected:
+    std::vector<CGprofile> _profiles;
+    std::vector<CGprogram> _programs;
+};
+
+class CgStartDrawCallback : public CgDrawCallback
+{
+public:
+    CgStartDrawCallback();
+    
+    virtual void operator()( osg::RenderInfo& renderInfo ) const;
+    
+protected:
+    mutable bool _initialized;
+};
+
+class CgEndDrawCallback : public CgDrawCallback
+{
+public:
+    virtual void operator()( osg::RenderInfo& renderInfo ) const;
+};
+
+#endif

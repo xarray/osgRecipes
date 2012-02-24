@@ -1,0 +1,66 @@
+PROJECT(OSG_Cookbook)
+
+IF(WIN32)
+    IF(MSVC)
+        ADD_DEFINITIONS(-D_SCL_SECURE_NO_WARNINGS)
+        ADD_DEFINITIONS(-D_CRT_SECURE_NO_DEPRECATE)
+    ENDIF(MSVC)
+ELSE(WIN32)
+    SET(CMAKE_CXX_FLAGS "-W -Wall -Wno-unused")
+ENDIF(WIN32)
+
+FIND_PATH(OPENSCENEGRAPH_INCLUDE_DIR osg/Referenced
+    PATHS
+    $ENV{OSG_ROOT}/include
+    $ENV{OSG_DIR}/include
+    /usr/include 
+    /usr/local/include
+)
+
+FIND_PATH(OPENSCENEGRAPH_LIB_DIR libosg.so osg.lib
+    PATHS
+    $ENV{OSG_ROOT}/lib
+    $ENV{OSG_DIR}/lib
+    /usr/lib 
+    /usr/local/lib
+)
+
+INCLUDE_DIRECTORIES(common ${OPENSCENEGRAPH_INCLUDE_DIR})
+LINK_DIRECTORIES(${OPENSCENEGRAPH_LIB_DIR})
+SET(COMMON_FILES
+    ${CMAKE_SOURCE_DIR}/cookbook/common/CommonFunctions.cpp
+    ${CMAKE_SOURCE_DIR}/cookbook/common/CommonFunctions
+)
+
+MACRO(START_EXAMPLE)
+
+    INCLUDE_DIRECTORIES(${EXTERNAL_INCLUDE_DIR})
+    ADD_EXECUTABLE(${EXAMPLE_NAME} ${EXAMPLE_FILES} ${COMMON_FILES})
+    SET_TARGET_PROPERTIES(${EXAMPLE_NAME} PROPERTIES DEBUG_POSTFIX "${CMAKE_DEBUG_POSTFIX}")
+    
+    TARGET_LINK_LIBRARIES(${EXAMPLE_NAME}
+        debug osg${CMAKE_DEBUG_POSTFIX}          optimized osg
+        debug osgAnimation${CMAKE_DEBUG_POSTFIX} optimized osgAnimation
+        debug osgParticle${CMAKE_DEBUG_POSTFIX}  optimized osgParticle
+        debug osgDB${CMAKE_DEBUG_POSTFIX}        optimized osgDB
+        debug osgGA${CMAKE_DEBUG_POSTFIX}        optimized osgGA
+        debug osgText${CMAKE_DEBUG_POSTFIX}      optimized osgText
+        debug osgUtil${CMAKE_DEBUG_POSTFIX}      optimized osgUtil
+        debug osgViewer${CMAKE_DEBUG_POSTFIX}    optimized osgViewer
+        debug OpenThreads${CMAKE_DEBUG_POSTFIX}  optimized OpenThreads
+        ${EXTERNAL_LIBRARIES}
+    )
+    INSTALL(TARGETS ${EXAMPLE_NAME} RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+
+ENDMACRO(START_EXAMPLE)
+
+#ADD_SUBDIRECTORY(chapter1)  # CUSTOMZING OPENSCENEGRAPH (no source)
+ADD_SUBDIRECTORY(chapter2)   # DESIGNING THE SCENE GRAPH
+ADD_SUBDIRECTORY(chapter3)   # EDITING GEOMETRY MODELS
+ADD_SUBDIRECTORY(chapter4)   # MANIPULATING THE VIEW
+ADD_SUBDIRECTORY(chapter5)   # ANIMATING EVERYTHING
+ADD_SUBDIRECTORY(chapter6)   # CREATING CREATIVE EFFECTS
+#ADD_SUBDIRECTORY(chapter7)  # VISUALIZING THE WORLD (no source)
+ADD_SUBDIRECTORY(chapter8)   # MANAGING MASSIVE DATA
+ADD_SUBDIRECTORY(chapter9)   # INTEGRATING WITH GUI
+ADD_SUBDIRECTORY(chapter10)  # DISCUSSION IN DEPTH

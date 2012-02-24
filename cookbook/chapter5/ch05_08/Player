@@ -1,0 +1,45 @@
+/* -*-c++-*- OpenSceneGraph Cookbook
+ * Chapter 5 Recipe 8
+ * Author: Wang Rui <wangray84 at gmail dot com>
+*/
+
+#ifndef H_COOKBOOK_CH5_PLAYER
+#define H_COOKBOOK_CH5_PLAYER
+
+#include <osg/MatrixTransform>
+#include <osgGA/GUIEventAdapter>
+#define RAND(min, max) ((min) + (float)rand()/(RAND_MAX+1) * ((max)-(min)))
+
+class Player : public osg::MatrixTransform
+{
+public:
+    Player();
+    Player( float width, float height, const std::string& texfile );
+    
+    float width() const { return _size[0]; }
+    float height() const { return _size[1]; }
+    
+    void setSpeedVector( const osg::Vec3& sv ) { _speedVec = sv; }
+    const osg::Vec3& getSpeedVector() const { return _speedVec; }
+    
+    enum PlayerType
+    {
+        INVALID_OBJ=0, PLAYER_OBJ, ENEMY_OBJ,
+        PLAYER_BULLET_OBJ, ENEMY_BULLET_OBJ
+    };
+    void setPlayerType( PlayerType t ) { _type = t; }
+    PlayerType getPlayerType() const { return _type; }
+    
+    bool isBullet() const
+    { return _type==PLAYER_BULLET_OBJ || _type==ENEMY_BULLET_OBJ; }
+    
+    bool update( const osgGA::GUIEventAdapter& ea, osg::Group* root );
+    bool intersectWith( Player* player ) const;
+    
+protected:
+    osg::Vec2 _size;
+    osg::Vec3 _speedVec;
+    PlayerType _type;
+};
+
+#endif

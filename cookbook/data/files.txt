@@ -1,0 +1,7 @@
+cessna.osg 0 0 40
+cow.osg 40 0 0
+cessna.osg 0 40 40
+dumptruck.osg 20 40 0
+cessna.osg 40 0 40
+cow.osg 0 20 0
+cessna.osg 40 40 40

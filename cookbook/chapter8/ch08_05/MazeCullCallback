@@ -1,0 +1,23 @@
+/* -*-c++-*- OpenSceneGraph Cookbook
+ * Chapter 8 Recipe 5
+ * Author: Wang Rui <wangray84 at gmail dot com>
+*/
+
+#ifndef H_COOKBOOK_CH8_MAZECULLCALLBACK
+#define H_COOKBOOK_CH8_MAZECULLCALLBACK
+
+#include <osg/Node>
+
+typedef std::pair<int, int> CellIndex;
+typedef std::map<CellIndex, int> CellMap;
+extern CellMap g_mazeMap;
+
+class MazeCullCallback : public osg::NodeCallback
+{
+public:
+    virtual void operator()( osg::Node* node, osg::NodeVisitor* nv );
+    
+    bool getCellIndex( CellIndex& index, const osg::Vec3& pos );
+};
+
+#endif

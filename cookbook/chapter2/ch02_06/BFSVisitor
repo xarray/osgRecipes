@@ -1,0 +1,28 @@
+/* -*-c++-*- OpenSceneGraph Cookbook
+ * Chapter 2 Recipe 6
+ * Author: Wang Rui <wangray84 at gmail dot com>
+*/
+
+#ifndef H_COOKBOOK_CH2_BFSVISITOR
+#define H_COOKBOOK_CH2_BFSVISITOR
+
+#include <osg/NodeVisitor>
+#include <deque>
+
+class BFSVisitor : public osg::NodeVisitor
+{
+public:
+    BFSVisitor();
+    
+    virtual void reset() { _pendingNodes.clear(); }
+    virtual void apply( osg::Node& node ) { traverseBFS(node); }
+    
+protected:
+    virtual ~BFSVisitor();
+    
+    void traverseBFS( osg::Node& node );
+    
+    std::deque<osg::Node*> _pendingNodes;
+};
+
+#endif

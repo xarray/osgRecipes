@@ -1,0 +1,44 @@
+/* -*-c++-*- OpenSceneGraph Cookbook
+ * Chapter 5 Recipe 12
+ * Author: Wang Rui <wangray84 at gmail dot com>
+*/
+
+#ifndef H_COOKBOOK_CH5_PHYSXINTERFACE
+#define H_COOKBOOK_CH5_PHYSXINTERFACE
+
+#include <NxPhysics.h>
+#include <osg/Referenced>
+#include <osg/Vec3>
+#include <osg/Plane>
+#include <osg/Matrix>
+#include <string>
+#include <map>
+
+class PhysXInterface : public osg::Referenced
+{
+public:
+    static PhysXInterface* instance();
+    
+    void createWorld( const osg::Plane& plane, const osg::Vec3& gravity );
+    void createBox( int id, const osg::Vec3& dim, double mass );
+    void createSphere( int id, double radius, double mass );
+    
+    void setVelocity( int id, const osg::Vec3& pos );
+    void setMatrix( int id, const osg::Matrix& matrix );
+    osg::Matrix getMatrix( int id );
+    
+    void simulate( double step );
+    
+protected:
+    PhysXInterface();
+    virtual ~PhysXInterface();
+    
+    void createActor( int id, NxShapeDesc* shape, NxBodyDesc* body );
+    
+    typedef std::map<int, NxActor*> ActorMap;
+    ActorMap _actors;
+    NxPhysicsSDK* _physicsSDK;
+    NxScene* _scene;
+};
+
+#endif

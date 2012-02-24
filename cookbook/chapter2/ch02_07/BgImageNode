@@ -1,0 +1,22 @@
+/* -*-c++-*- OpenSceneGraph Cookbook
+ * Chapter 2 Recipe 7
+ * Author: Wang Rui <wangray84 at gmail dot com>
+*/
+
+#ifndef H_COOKBOOK_CH2_BGIMAGENODE
+#define H_COOKBOOK_CH2_BGIMAGENODE
+
+#include <osg/Camera>
+
+class BgImageNode : public osg::Camera
+{
+public:
+    CgStartCallback();
+    CgStartCallback( const CgStartCallback& copy, osg::CopyOp copyop=osg::CopyOp::SHALLOW_COPY );
+    META_Node( osg, CgStartCallback );
+    
+protected:
+    virtual ~CgStartCallback();
+};
+
+#endif

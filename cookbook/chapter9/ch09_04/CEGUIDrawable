@@ -1,0 +1,33 @@
+/* -*-c++-*- OpenSceneGraph Cookbook
+ * Chapter 9 Recipe 4
+ * Author: Wang Rui <wangray84 at gmail dot com>
+*/
+
+#ifndef H_COOKBOOK_CH9_CEGUIDRAWABLE
+#define H_COOKBOOK_CH9_CEGUIDRAWABLE
+
+#include <CEGUI.h>
+#include <RendererModules/OpenGL/CEGUIOpenGLRenderer.h>
+#include <osg/Drawable>
+
+class CEGUIDrawable : public osg::Drawable
+{
+public:
+    CEGUIDrawable();
+    CEGUIDrawable( const CEGUIDrawable& copy,const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY );
+    META_Object( osg, CEGUIDrawable );
+    
+    virtual void drawImplementation( osg::RenderInfo& renderInfo ) const;
+    
+    void initializeControls();
+    bool handleClose( const CEGUI::EventArgs& e );
+    
+protected:
+    virtual ~CEGUIDrawable() {}
+    
+    mutable double _lastSimulationTime;
+    mutable unsigned int _activeContextID;
+    mutable bool _initialized;
+};
+
+#endif

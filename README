@@ -6,11 +6,32 @@ The osgRecipes project includes different recipes written with OpenSceneGraph (O
 This project is also the source code repository of Rui Wang & Xuelei Qian's book `OpenSceneGraph 3.0 Cookbook`, Packt Publishing, 2012. You may read more details or order this book at:
 http://www.packtpub.com/openscenegrap-3-for-advanced-3d-programming-using-api-cookbook/book
 
+------------
 Installation
 ------------
 
-To be continued...
+1. Use CMake (or cmake-gui) to build makefiles or solutions of the recipes
+# cmake <recipe_dir> -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=<install_dir>
 
+2. Run 'make' to build and install all recipes
+# make
+# make install
+
+4. Copy all files in the data directory to 'bin' in the installed directory
+# cp <recipe_dir>/cookbook/data/*.* <install_dir>/bin
+
+5. Have fun!
+
+You may have to download and compile these third-party dependencies to test all the recipes:
+CEGUI: http://www.cegui.org.uk
+NVIDIA Cg: http://developer.nvidia.com/cg-toolkit
+DirectInput (Windows only): http://msdn.microsoft.com/en-us/directx/aa937788
+GLUT: http://www.opengl.org/resources/libraries/glut
+NVIDIA Physx (version 2.8.x): http://developer.nvidia.com/physx-downloads
+Qt (version 4): http://qt.nokia.com/products
+FireBreath: http://www.firebreath.org/display/documentation/FireBreath+Home
+
+------------
 Contributing
 ------------
 
