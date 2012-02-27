@@ -4,10 +4,13 @@ SET(EXAMPLE_FILES ch06_01/bump_mapping.cpp)
 START_EXAMPLE()
 
 # Example 2: Simulating the view-dependent shadow
-SET(EXAMPLE_NAME cookbook_06_02)
-SET(EXAMPLE_FILES ch06_02/shadow.cpp)
-SET(EXTERNAL_LIBRARIES "debug;osgShadow${CMAKE_DEBUG_POSTFIX};optimized;osgShadow")
-START_EXAMPLE()
+CHECK_INCLUDE_FILES (osgShadow/ViewDependentShadowMap HAVE_VIEWDEPENDENTSHADOWMAP_H)
+IF(HAVE_VIEWDEPENDENTSHADOWMAP_H)
+  SET(EXAMPLE_NAME cookbook_06_02)
+  SET(EXAMPLE_FILES ch06_02/shadow.cpp)
+  SET(EXTERNAL_LIBRARIES "debug;osgShadow${CMAKE_DEBUG_POSTFIX};optimized;osgShadow")
+  START_EXAMPLE()
+ENDIF(HAVE_VIEWDEPENDENTSHADOWMAP_H)
 
 # Example 3: Implementing transparency with multiple passes
 SET(EXAMPLE_NAME cookbook_06_03)

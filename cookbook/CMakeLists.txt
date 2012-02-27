@@ -1,5 +1,7 @@
 PROJECT(OSG_Cookbook)
 
+INCLUDE (CheckIncludeFiles)
+
 IF(WIN32)
     IF(MSVC)
         ADD_DEFINITIONS(-D_SCL_SECURE_NO_WARNINGS)
