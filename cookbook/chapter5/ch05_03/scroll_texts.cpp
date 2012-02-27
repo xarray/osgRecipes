@@ -11,7 +11,7 @@
 
 #include "CommonFunctions"
 
-#define RAND(min, max) ((min) + (float)rand()/(RAND_MAX+1) * ((max)-(min)))
+#define RAND(min, max) ((min) + (float)rand()/(RAND_MAX) * ((max)-(min)))
 
 class ScrollTextCallback : public osg::Drawable::UpdateCallback
 {
