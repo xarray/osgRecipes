@@ -14,7 +14,7 @@
 
 const unsigned int MAIN_CAMERA_MASK = 0x1;
 const unsigned int RADAR_CAMERA_MASK = 0x2;
-#define RAND(min, max) ((min) + (float)rand()/(RAND_MAX+1) * ((max)-(min)))
+#define RAND(min, max) ((min) + (float)rand()/(RAND_MAX) * ((max)-(min)))
 
 osg::Node* createObject( const std::string& filename, const osg::Vec4& color )
 {

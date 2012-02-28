@@ -8,7 +8,7 @@
 
 #include <osg/MatrixTransform>
 #include <osgGA/GUIEventAdapter>
-#define RAND(min, max) ((min) + (float)rand()/(RAND_MAX+1) * ((max)-(min)))
+#define RAND(min, max) ((min) + (float)rand()/(RAND_MAX) * ((max)-(min)))
 
 class Player : public osg::MatrixTransform
 {
