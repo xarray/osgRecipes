@@ -70,7 +70,7 @@ static bool checkChildData( const testNS::ComplexNode& node )
 
 static bool readChildData( osgDB::InputStream& is, testNS::ComplexNode& node )
 {
-    unsigned int size = 0; is >> size >> osgDB::BEGIN_BRACKET;
+    unsigned int size = 0; is >> size >> is.BEGIN_BRACKET;
     for ( unsigned int i=0; i<size; ++i )
     {
         testNS::ComplexNode::ChildData data;
@@ -78,30 +78,30 @@ static bool readChildData( osgDB::InputStream& is, testNS::ComplexNode& node )
         is >> childFlag >> data.active >> data.name;
         
         bool hasImage = false;
-        is >> hasImage >> osgDB::BEGIN_BRACKET;
-        if ( hasImage ) is >> data.image >> osgDB::END_BRACKET;
+        is >> hasImage >> is.BEGIN_BRACKET;
+        if ( hasImage ) is >> data.image >> is.END_BRACKET;
         node.addChildData( data );
     }
-    is >> osgDB::END_BRACKET;
+    is >> is.END_BRACKET;
     return true;
 }
 
 static bool writeChildData( osgDB::OutputStream& os, const testNS::ComplexNode& node )
 {
     unsigned int size = node.sizeOfChildren();
-    os << size << osgDB::BEGIN_BRACKET << std::endl;
+    os << size << os.BEGIN_BRACKET << std::endl;
     for ( unsigned int i=0; i<size; ++i )
     {
         const testNS::ComplexNode::ChildData& data = node.getChildData(i);
         os << std::string("Child") << data.active << data.name;
         if ( data.image.valid() )
         {
-            os << true << osgDB::BEGIN_BRACKET << std::endl;
-            os << data.image << osgDB::END_BRACKET << std::endl;
+            os << true << os.BEGIN_BRACKET << std::endl;
+            os << data.image << os.END_BRACKET << std::endl;
         }
         else os << false << std::endl;
     }
-    os << osgDB::END_BRACKET << std::endl;
+    os << os.END_BRACKET << std::endl;
     return true;
 }
 
