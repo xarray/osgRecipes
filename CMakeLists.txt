@@ -9,3 +9,6 @@ ENDIF(COMMAND CMAKE_POLICY)
 
 # The OpenSceneGraph 3.0 Cookbook Source code
 ADD_SUBDIRECTORY(cookbook)
+
+# The integration examples
+ADD_SUBDIRECTORY(integrations)
