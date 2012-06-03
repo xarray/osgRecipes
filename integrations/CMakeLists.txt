@@ -53,6 +53,7 @@ MACRO(START_EXAMPLE)
 
 ENDMACRO(START_EXAMPLE)
 
+#ADD_SUBDIRECTORY(osganimata)          # OSG & Animata
 ADD_SUBDIRECTORY(osganttweakbar)      # OSG & AntTweakBar
 #ADD_SUBDIRECTORY(osgawesomium)        # OSG & Awesomium
 #ADD_SUBDIRECTORY(osgcsg)              # OSG & OpenCSG
@@ -62,7 +63,35 @@ ADD_SUBDIRECTORY(osganttweakbar)      # OSG & AntTweakBar
 #ADD_SUBDIRECTORY(osgmskinect)         # OSG & Microsoft Kinect SDK
 #ADD_SUBDIRECTORY(osgmygui)            # OSG & MyGUI
 #ADD_SUBDIRECTORY(osgnurbs)            # OSG & openNURBS
+#ADD_SUBDIRECTORY(osgphysx3)           # OSG & Nvidia PhysX 3.x
 ADD_SUBDIRECTORY(osgspark)            # OSG & Spark Particle
 #ADD_SUBDIRECTORY(osgtuio)             # OSG & TUIO
-#ADD_SUBDIRECTORY(osgtuio)             # OSG & Triton
+#ADD_SUBDIRECTORY(osgtuio)             # OSG & Sundog Triton
 #ADD_SUBDIRECTORY(osgwoody3d)          # OSG & Woody3D
+
+MACRO(START_LIBRARY)
+
+    INCLUDE_DIRECTORIES(${EXTERNAL_INCLUDE_DIR})
+    ADD_LIBRARY(${LIBRARY_NAME} MODULE ${LIBRARY_FILES})
+    SET_TARGET_PROPERTIES(${LIBRARY_NAME} PROPERTIES DEBUG_POSTFIX "${CMAKE_DEBUG_POSTFIX}")
+    
+    TARGET_LINK_LIBRARIES(${LIBRARY_NAME}
+        debug osg${CMAKE_DEBUG_POSTFIX}          optimized osg
+        debug osgAnimation${CMAKE_DEBUG_POSTFIX} optimized osgAnimation
+        debug osgParticle${CMAKE_DEBUG_POSTFIX}  optimized osgParticle
+        debug osgDB${CMAKE_DEBUG_POSTFIX}        optimized osgDB
+        debug osgGA${CMAKE_DEBUG_POSTFIX}        optimized osgGA
+        debug osgText${CMAKE_DEBUG_POSTFIX}      optimized osgText
+        debug osgUtil${CMAKE_DEBUG_POSTFIX}      optimized osgUtil
+        debug osgViewer${CMAKE_DEBUG_POSTFIX}    optimized osgViewer
+        debug OpenThreads${CMAKE_DEBUG_POSTFIX}  optimized OpenThreads
+        ${EXTERNAL_LIBRARIES}
+    )
+    INSTALL(TARGETS ${LIBRARY_NAME} RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+                                    ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+                                    LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+
+ENDMACRO(START_LIBRARY)
+
+ADD_SUBDIRECTORY(osgdb_assimp)        # OSG & Open Asset Import Library
+ADD_SUBDIRECTORY(osgdb_freeimage)     # OSG & FreeImage
