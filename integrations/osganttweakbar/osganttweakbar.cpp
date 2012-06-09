@@ -5,60 +5,123 @@
 #include <osgGA/TrackballManipulator>
 #include <osgViewer/ViewerEventHandlers>
 #include <osgViewer/Viewer>
+#include <queue>
 
 #include <AntTweakBar.h>
 TwBar* g_twBar = NULL;
+char g_fileName[64] = "cow.osg";
+float position[3] = {0.0f};
+float rotation[4] = {0.0f, 0.0f, 0.0f, 1.0f};
 
-class TwGUIHandler : public osgGA::GUIEventHandler
+class TwGUIManager : public osgGA::GUIEventHandler, public osg::Camera::DrawCallback
 {
 public:
-    TwGUIHandler()
+    TwGUIManager( osg::MatrixTransform* node=0 ) : _scene(node)
     {
         TwInit( TW_OPENGL, NULL );
         g_twBar = TwNewBar( "OSGDemo" );
         initializeTwGUI();
     }
     
+    TwGUIManager( const TwGUIManager& copy, const osg::CopyOp& op=osg::CopyOp::SHALLOW_COPY )
+    :   _eventsToHandle(copy._eventsToHandle), _scene(copy._scene)
+    {
+    }
+    
+    META_Object( osg, TwGUIManager )
+    
+    static void TW_CALL loadModelFunc( void* clientData )
+    {
+        TwGUIManager* manager = (TwGUIManager*)clientData;
+        if ( manager && manager->_scene.valid() )
+        {
+            manager->_scene->removeChild( 0, manager->_scene->getNumChildren() );
+            manager->_scene->addChild( osgDB::readNodeFile(g_fileName) );
+        }
+    }
+    
     void initializeTwGUI()
     {
+        TwDefine(" OSGDemo size='240 400' color='96 216 224' ");
+        
+        TwAddVarRW( g_twBar, "ModelName", TW_TYPE_CSSTRING(sizeof(g_fileName)), g_fileName, " label='Model name' " );
+        TwAddButton( g_twBar, "LoadButton", TwGUIManager::loadModelFunc, this, " label='Load model from file' " );
+        TwAddSeparator( g_twBar, NULL, NULL );
+        TwAddVarRW( g_twBar, "PosX", TW_TYPE_FLOAT, &(position[0]), " step=0.1 " );
+        TwAddVarRW( g_twBar, "PosY", TW_TYPE_FLOAT, &(position[1]), " step=0.1 " );
+        TwAddVarRW( g_twBar, "PosZ", TW_TYPE_FLOAT, &(position[2]), " step=0.1 " );
+        TwAddVarRW( g_twBar, "Rotation", TW_TYPE_QUAT4F, &(rotation[0]), NULL );
+    }
+    
+    void updateEvents() const
+    {
+        unsigned int size = _eventsToHandle.size();
+        for ( unsigned int i=0; i<size; ++i )
+        {
+            const osgGA::GUIEventAdapter& ea = *(_eventsToHandle.front());
+            float x = ea.getX(), y = ea.getWindowHeight() - ea.getY();
+            switch ( ea.getEventType() )
+            {
+            case osgGA::GUIEventAdapter::PUSH:
+                TwMouseMotion( x, y );
+                TwMouseButton( TW_MOUSE_PRESSED, getTwButton(ea.getButton()) );
+                break;
+            case osgGA::GUIEventAdapter::RELEASE:
+                TwMouseMotion( x, y );
+                TwMouseButton( TW_MOUSE_RELEASED, getTwButton(ea.getButton()) );
+                break;
+            case osgGA::GUIEventAdapter::DRAG:
+            case osgGA::GUIEventAdapter::MOVE:
+                TwMouseMotion( x, y );
+                break;
+            case osgGA::GUIEventAdapter::KEYDOWN:
+                {
+                    bool useCtrl = false;
+                    if ( ea.getModKeyMask()&osgGA::GUIEventAdapter::MODKEY_CTRL ) useCtrl = true;
+                    TwKeyPressed( getTwKey(ea.getKey(), useCtrl), getTwModKeyMask(ea.getModKeyMask()) );
+                }
+                break;
+            default: break;
+            }
+            const_cast<TwGUIManager*>(this)->_eventsToHandle.pop();
+        }
     }
     
     virtual bool handle( const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa )
     {
-        float x = ea.getX(), y = ea.getWindowHeight() - ea.getY();
         switch ( ea.getEventType() )
         {
-        case osgGA::GUIEventAdapter::PUSH:
-            TwMouseMotion( x, y );
-            TwMouseButton( TW_MOUSE_PRESSED, getTwButton(ea.getButton()) );
-            break;
-        case osgGA::GUIEventAdapter::RELEASE:
-            TwMouseMotion( x, y );
-            TwMouseButton( TW_MOUSE_RELEASED, getTwButton(ea.getButton()) );
-            break;
-        case osgGA::GUIEventAdapter::DRAG:
-        case osgGA::GUIEventAdapter::MOVE:
-            TwMouseMotion( x, y );
-            break;
-        case osgGA::GUIEventAdapter::KEYDOWN:
+        case osgGA::GUIEventAdapter::FRAME:  // Update transform values
+            if ( _scene.valid() )
             {
-                bool useCtrl = false;
-                if ( ea.getModKeyMask()&osgGA::GUIEventAdapter::MODKEY_CTRL ) useCtrl = true;
-                TwKeyPressed( getTwKey(ea.getKey(), useCtrl), getTwModKeyMask(ea.getModKeyMask()) );
+                osg::Vec3 pos(position[0], position[1], position[2]);
+                osg::Quat quat(rotation[0], rotation[1], rotation[2], rotation[3]);
+                _scene->setMatrix( osg::Matrix::rotate(quat) * osg::Matrix::translate(pos) );
             }
-            break;
-        default: break;
+            return false;
         }
+        
+        // As AntTweakBar handle all events within the OpenGL context, we have to record the event here
+        // and process it later in the draw callback
+        _eventsToHandle.push( &ea );
         return false;
     }
     
+    virtual void operator()( osg::RenderInfo& renderInfo ) const
+    {
+        osg::Viewport* viewport = renderInfo.getCurrentCamera()->getViewport();
+        if ( viewport ) TwWindowSize( viewport->width(), viewport->height() );
+        updateEvents();
+        TwDraw();
+    }
+    
 protected:
-    virtual ~TwGUIHandler()
+    virtual ~TwGUIManager()
     {
         TwTerminate();
     }
     
-    TwMouseButtonID getTwButton( int button )
+    TwMouseButtonID getTwButton( int button ) const
     {
         switch ( button )
         {
@@ -69,7 +132,7 @@ protected:
         return static_cast<TwMouseButtonID>(0);
     }
     
-    int getTwKey( int key, bool useCtrl )
+    int getTwKey( int key, bool useCtrl ) const
     {
         switch ( key )
         {
@@ -104,7 +167,7 @@ protected:
         return key;
     }
     
-    int getTwModKeyMask( int modkey )
+    int getTwModKeyMask( int modkey ) const
     {
         int twModkey = 0;
         if ( modkey&osgGA::GUIEventAdapter::MODKEY_SHIFT ) twModkey |= TW_KMOD_SHIFT;
@@ -112,32 +175,9 @@ protected:
         if ( modkey&osgGA::GUIEventAdapter::MODKEY_CTRL ) twModkey |= TW_KMOD_CTRL;
         return twModkey;
     }
-};
-
-class TwGUIDrawCallback : public osg::Camera::DrawCallback
-{
-public:
-    virtual void operator()( osg::RenderInfo& renderInfo ) const
-    {
-        osg::Viewport* viewport = renderInfo.getCurrentCamera()->getViewport();
-        if ( viewport ) TwWindowSize( viewport->width(), viewport->height() );
-        TwDraw();
-    }
-};
-
-class MyTrackballManipulator : public osgGA::TrackballManipulator
-{
-public:
-    virtual bool handle( const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa )
-    {
-        if ( g_twBar )
-        {
-            int iconified = 0;
-            TwGetParam( g_twBar, NULL, "iconified", TW_PARAM_INT32, 1, &iconified );
-            if ( !iconified ) return false;  // Camera manipulating is disabled if the GUI is opend
-        }
-        return osgGA::TrackballManipulator::handle(ea, aa);
-    }
+    
+    std::queue< osg::ref_ptr<const osgGA::GUIEventAdapter> > _eventsToHandle;
+    osg::observer_ptr<osg::MatrixTransform> _scene;
 };
 
 int main( int argc, char** argv )
@@ -147,12 +187,9 @@ int main( int argc, char** argv )
     
     osgViewer::Viewer viewer;
     viewer.setSceneData( scene.get() );
-	viewer.addEventHandler( new osgGA::StateSetManipulator(viewer.getCamera()->getOrCreateStateSet()) );
-	viewer.addEventHandler( new osgViewer::StatsHandler );
-    viewer.addEventHandler( new osgViewer::WindowSizeHandler );
     
-    viewer.addEventHandler( new TwGUIHandler );
-    viewer.getCamera()->setFinalDrawCallback( new TwGUIDrawCallback );
-    viewer.setCameraManipulator( new MyTrackballManipulator );
+    osg::ref_ptr<TwGUIManager> twGUI = new TwGUIManager( scene.get() ); 
+    viewer.addEventHandler( twGUI.get() );
+    viewer.getCamera()->setFinalDrawCallback( twGUI.get() );
 	return viewer.run();
 }

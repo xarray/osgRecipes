@@ -66,7 +66,7 @@ ADD_SUBDIRECTORY(osganttweakbar)      # OSG & AntTweakBar
 #ADD_SUBDIRECTORY(osgphysx3)           # OSG & Nvidia PhysX 3.x
 ADD_SUBDIRECTORY(osgspark)            # OSG & Spark Particle
 #ADD_SUBDIRECTORY(osgtuio)             # OSG & TUIO
-#ADD_SUBDIRECTORY(osgtuio)             # OSG & Sundog Triton
+#ADD_SUBDIRECTORY(osgtriton)           # OSG & Sundog Triton
 #ADD_SUBDIRECTORY(osgwoody3d)          # OSG & Woody3D
 
 MACRO(START_LIBRARY)
