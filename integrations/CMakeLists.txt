@@ -1,7 +1,10 @@
 PROJECT(OSG_Integrations)
 
+SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR};${CMAKE_MODULE_PATH}")
+SET(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "add a postfix, usually d on windows")
 INCLUDE(CheckIncludeFiles)
 FIND_PACKAGE(OpenGL)
+FIND_PACKAGE(GLEW)
 
 IF(WIN32)
     IF(MSVC)
@@ -60,7 +63,7 @@ ADD_SUBDIRECTORY(osganttweakbar)      # OSG & AntTweakBar
 #ADD_SUBDIRECTORY(osgdirectwrite)      # OSG & Microsoft DirectWrite
 #ADD_SUBDIRECTORY(osgguichan)          # OSG & GUIChan
 #ADD_SUBDIRECTORY(osggimzo)            # OSG & libGimzo
-#ADD_SUBDIRECTORY(osgmskinect)         # OSG & Microsoft Kinect SDK
+ADD_SUBDIRECTORY(osgmskinect)         # OSG & Microsoft Kinect SDK
 #ADD_SUBDIRECTORY(osgmygui)            # OSG & MyGUI
 #ADD_SUBDIRECTORY(osgnurbs)            # OSG & openNURBS
 #ADD_SUBDIRECTORY(osgphysx3)           # OSG & Nvidia PhysX 3.x
