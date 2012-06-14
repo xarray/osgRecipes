@@ -1,4 +1,5 @@
 #include "KinectHandler.h"
+#include <osg/Point>
 #include <osg/Texture2D>
 #include <osg/Geometry>
 #include <osg/MatrixTransform>
@@ -105,14 +106,15 @@ int main( int argc, char** argv )
     camera->setReferenceFrame( osg::Transform::ABSOLUTE_RF );
     camera->setRenderOrder( osg::Camera::POST_RENDER );
     camera->setAllowEventFocus( false );
-    camera->setViewport( 0, 0, 640, 480 );
+    camera->setViewport( 0, 0, 320, 240 );
     camera->setProjectionMatrix( osg::Matrix::ortho2D(0.0, 1.0, 1.0, 0.0) );
     camera->addChild( imageQuad.get() );
     
     // Display the skeleton geometry
     osg::ref_ptr<osg::Geode> skeletonQuad = new osg::Geode;
-    skeletonQuad->setInitialBound( osg::BoundingSphere(osg::Vec3(), 1.5f) );
+    skeletonQuad->setInitialBound( osg::BoundingSphere(osg::Vec3(), 1.0f) );
     skeletonQuad->addDrawable( kinectHandler->skeletonGeom.get() );
+    skeletonQuad->getOrCreateStateSet()->setAttributeAndModes( new osg::Point(5.0f) );
     
     // The scene graph and viewer
     osg::ref_ptr<osg::MatrixTransform> root = new osg::MatrixTransform;
@@ -120,11 +122,15 @@ int main( int argc, char** argv )
     root->addChild( skeletonQuad.get() );
     root->getOrCreateStateSet()->setMode( GL_LIGHTING, osg::StateAttribute::OFF );
     
+    osg::ref_ptr<osgGA::TrackballManipulator> trackball = new osgGA::TrackballManipulator;
+    trackball->setHomePosition( osg::Vec3(0.5f, 0.5f,-2.0f), osg::Vec3(0.5f, 0.5f, 0.5f), osg::Vec3(0.0f,-1.0f, 0.0f) );
+    
     osgViewer::Viewer viewer;
     viewer.addEventHandler( new osgGA::StateSetManipulator(viewer.getCamera()->getOrCreateStateSet()) );
     viewer.addEventHandler( new osgViewer::StatsHandler );
     viewer.addEventHandler( new osgViewer::WindowSizeHandler );
     viewer.addEventHandler( kinectHandler.get() );
+    viewer.setCameraManipulator( trackball.get() );
     viewer.setSceneData( root.get() );
     viewer.run();
     
