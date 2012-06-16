@@ -58,8 +58,7 @@ ENDMACRO(START_EXAMPLE)
 
 #ADD_SUBDIRECTORY(osganimata)          # OSG & Animata
 ADD_SUBDIRECTORY(osganttweakbar)      # OSG & AntTweakBar
-#ADD_SUBDIRECTORY(osgawesomium)        # OSG & Awesomium
-#ADD_SUBDIRECTORY(osgcsg)              # OSG & OpenCSG
+ADD_SUBDIRECTORY(osgawesomium)        # OSG & Awesomium
 #ADD_SUBDIRECTORY(osgdirectwrite)      # OSG & Microsoft DirectWrite
 #ADD_SUBDIRECTORY(osgguichan)          # OSG & GUIChan
 #ADD_SUBDIRECTORY(osggimzo)            # OSG & libGimzo
@@ -68,7 +67,7 @@ ADD_SUBDIRECTORY(osgmskinect)         # OSG & Microsoft Kinect SDK
 #ADD_SUBDIRECTORY(osgnurbs)            # OSG & openNURBS
 #ADD_SUBDIRECTORY(osgphysx3)           # OSG & Nvidia PhysX 3.x
 ADD_SUBDIRECTORY(osgspark)            # OSG & Spark Particle
-#ADD_SUBDIRECTORY(osgtuio)             # OSG & TUIO
+ADD_SUBDIRECTORY(osgtuio)             # OSG & TUIO
 #ADD_SUBDIRECTORY(osgtriton)           # OSG & Sundog Triton
 #ADD_SUBDIRECTORY(osgwoody3d)          # OSG & Woody3D
 
