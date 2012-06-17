@@ -42,7 +42,11 @@ After compiling all the source code, you have to copy the data directory to 'bin
 
 The third-party libraries that can be embedded with OSG are listed here for downloading:
 * AntTweakBar (a light and intuitive GUI framework): http://www.antisphere.com/Wiki/tools:anttweakbar
+* Awesomium (a web-browser framework for in-app browsing and HTML UIs): http://awesomium.com/
+* Microsoft Kinect SDK: http://www.microsoft.com/en-us/kinectforwindows/develop/developer-downloads.aspx
+* NVIDIA PhysX (a well-rounded physics engine, version 3.2): http://developer.nvidia.com/physx-downloads
 * Spark (a crossplatform particle engine): http://spark.developpez.com/
+* TUIO (a common API for tangible multitouch surfaces): already included in the source code
 * To be continued...
 
 ------------
