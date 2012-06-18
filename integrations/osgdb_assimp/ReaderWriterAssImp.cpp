@@ -209,6 +209,7 @@ protected:
             {
                 texFound = aiMtl->GetTexture(
                     aiTextureType_DIFFUSE, texIndex++, &path, NULL, &unit, NULL, &envOp, &(wrapMode[0]) );
+                if ( unit>0 ) unit--;  // The output UV seems to start at 1?
                 if ( texFound!=AI_SUCCESS ) break;
                 
                 std::string texFile(path.data);
@@ -217,10 +218,10 @@ protected:
                 {
                     osg::ref_ptr<osg::Texture2D> tex2D = new osg::Texture2D;
                     tex2D->setWrap( osg::Texture::WRAP_S, getWrapMode(wrapMode[0]) );
-                    tex2D->setWrap( osg::Texture::WRAP_T, getWrapMode(wrapMode[0]) );
-                    tex2D->setWrap( osg::Texture::WRAP_R, getWrapMode(wrapMode[0]) );
-                    tex2D->setFilter( osg::Texture::MIN_FILTER, osg::Texture::LINEAR );
-                    tex2D->setFilter( osg::Texture::MAG_FILTER, osg::Texture::LINEAR_MIPMAP_LINEAR );
+                    tex2D->setWrap( osg::Texture::WRAP_T, getWrapMode(wrapMode[1]) );
+                    tex2D->setWrap( osg::Texture::WRAP_R, getWrapMode(wrapMode[2]) );
+                    tex2D->setFilter( osg::Texture::MIN_FILTER, osg::Texture::LINEAR_MIPMAP_LINEAR );
+                    tex2D->setFilter( osg::Texture::MAG_FILTER, osg::Texture::LINEAR );
                     tex2D->setImage( osgDB::readImageFile(texFile) );
                     textures[texFile] = tex2D;
                 }
