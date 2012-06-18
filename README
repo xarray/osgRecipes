@@ -47,6 +47,7 @@ The third-party libraries that can be embedded with OSG are listed here for down
 * NVIDIA PhysX (a well-rounded physics engine, version 3.2): http://developer.nvidia.com/physx-downloads
 * Spark (a crossplatform particle engine): http://spark.developpez.com/
 * TUIO (a common API for tangible multitouch surfaces): already included in the source code
+* VLC (a cross-platform multimedia player and framework): http://www.videolan.org/vlc/
 * To be continued...
 
 ------------
