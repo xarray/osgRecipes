@@ -72,27 +72,15 @@ public:
         [cdda://][device]              Audio CD device
         udp:[[<source address>]@[<bind address>][:<bind port>]]
     */
-    void open( const std::string& file, bool needPlay=true )
+    void open( const std::string& file, bool needPlay=true, unsigned int w=512, unsigned int h=512 )
     {
         _vlcMedia = libvlc_media_new_path( _vlc, file.c_str() );
         libvlc_media_player_set_media( _vlcPlayer, _vlcMedia );
         libvlc_video_set_callbacks( _vlcPlayer, &VLCImageStream::lockFunc, &VLCImageStream::unlockFunc,
                                     &VLCImageStream::displayFunc, this );
+        libvlc_video_set_format( _vlcPlayer, "RGBA", w, h, w*4 );
         
-        unsigned int width = 512, height = 512;
-        libvlc_media_track_info_t* info = NULL;
-        int numTracks = libvlc_media_get_tracks_info( _vlcMedia, &info );
-        for ( int i=0; i<numTracks; ++i )
-        {
-            if(info[i].i_type == libvlc_track_video)
-            {
-                width = info[i].u.video.i_width;
-                height = info[i].u.video.i_height;
-            }
-        }
-        libvlc_video_set_format( _vlcPlayer, "RV32", width, height, width*4 );
-        
-        allocateImage( width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE );
+        allocateImage( w, h, 1, GL_RGBA, GL_UNSIGNED_BYTE );
         if ( needPlay ) play();
     }
     
@@ -162,9 +150,10 @@ osg::Node* createVideoQuad( const osg::Vec3& corner, const std::string& file )
     
     osg::ref_ptr<osg::Texture2D> texture = new osg::Texture2D;
     texture->setImage( imageStream.get() );
+    texture->setResizeNonPowerOfTwoHint( false );
     
     osg::ref_ptr<osg::Drawable> quad = osg::createTexturedQuadGeometry(
-        corner, osg::Vec3(1.0f, 0.0f, 0.0f), osg::Vec3(0.0f, 0.0f, 1.0f) );
+        corner, osg::Vec3(1.0f, 0.0f, 0.0f), osg::Vec3(0.0f, 0.0f, 1.0f), 0.0f, 1.0f, 1.0f, 0.0f );
     quad->getOrCreateStateSet()->setTextureAttributeAndModes( 0, texture.get() );
     
     osg::ref_ptr<osg::Geode> geode = new osg::Geode;

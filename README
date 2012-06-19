@@ -1,9 +1,12 @@
 osgRecipes
 =============
 
-The osgRecipes project includes different recipes written with OpenSceneGraph (OSG) and can help developers work with this famous 3D rendering engine, as well as other auxiliary libraries. The osgRecipes project itself is in the Public Domain, but some of its recipes may be under other licenses.
+The osgRecipes project includes different recipes written with OpenSceneGraph (OSG) and can help developers work
+with this famous 3D rendering engine, as well as other auxiliary libraries. The osgRecipes project itself is in
+the Public Domain, but some of its recipes may be under other licenses.
 
-This project is also the source code repository of Rui Wang & Xuelei Qian's book `OpenSceneGraph 3.0 Cookbook`, Packt Publishing, 2012. You may read more details or order this book at:
+This project is also the source code repository of Rui Wang & Xuelei Qian's book `OpenSceneGraph 3.0 Cookbook`,
+Packt Publishing, 2012. You may read more details or order this book at:
 http://www.packtpub.com/openscenegrap-3-for-advanced-3d-programming-using-api-cookbook/book
 
 ------------
@@ -35,14 +38,20 @@ You may have to download and compile these third-party dependencies to test all 
 Integrations
 ------------
 
-This section will show you how to integrate OSG with different kinds of libraries and SDKs. This libraries can add extra functionalities like special effects, visual components and interaction methods to your OSG scene and greatly improve the performance of the applications. These libraries must be free for downloading and for non-commercial purpose of use. The license of the example code may vary according to the license of the third-party library if it does not fit the public domain.
+This section will show you how to integrate OSG with different kinds of libraries and SDKs. These libraries can
+add extra functionalities like special effects, visual components and interaction methods to your OSG scene and
+greatly improve the performance of the applications. These libraries must be free for downloading and for
+non-commercial purpose of use. The license of the example code may vary according to the license of the third-
+party library if it does not fit the public domain.
 
 After compiling all the source code, you have to copy the data directory to 'bin' in the installed directory
 # cp -r <recipe_dir>/integrations/data <install_dir>/bin
 
 The third-party libraries that can be embedded with OSG are listed here for downloading:
 * AntTweakBar (a light and intuitive GUI framework): http://www.antisphere.com/Wiki/tools:anttweakbar
+* AssImp (a library to import various well-known 3D model formats): http://assimp.sourceforge.net/
 * Awesomium (a web-browser framework for in-app browsing and HTML UIs): http://awesomium.com/
+* FreeImage (a library supporting popular image formats): http://freeimage.sourceforge.net/
 * Microsoft Kinect SDK: http://www.microsoft.com/en-us/kinectforwindows/develop/developer-downloads.aspx
 * NVIDIA PhysX (a well-rounded physics engine, version 3.2): http://developer.nvidia.com/physx-downloads
 * Spark (a crossplatform particle engine): http://spark.developpez.com/
