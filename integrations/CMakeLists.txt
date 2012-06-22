@@ -59,17 +59,19 @@ ENDMACRO(START_EXAMPLE)
 #ADD_SUBDIRECTORY(osganimata)          # OSG & Animata
 ADD_SUBDIRECTORY(osganttweakbar)      # OSG & AntTweakBar
 ADD_SUBDIRECTORY(osgawesomium)        # OSG & Awesomium
+#ADD_SUBDIRECTORY(osgberkelium)        # OSG & Berkelium
 #ADD_SUBDIRECTORY(osgdirectwrite)      # OSG & Microsoft DirectWrite
 #ADD_SUBDIRECTORY(osggameswf)          # OSG & GameSWF
 #ADD_SUBDIRECTORY(osgguichan)          # OSG & GUIChan
 #ADD_SUBDIRECTORY(osggimzo)            # OSG & libGimzo
+#ADD_SUBDIRECTORY(osgmini)             # OSG & libMini
 ADD_SUBDIRECTORY(osgmskinect)         # OSG & Microsoft Kinect SDK
-#ADD_SUBDIRECTORY(osgmygui)            # OSG & MyGUI
+ADD_SUBDIRECTORY(osgmygui)            # OSG & MyGUI
 #ADD_SUBDIRECTORY(osgnurbs)            # OSG & openNURBS
 #ADD_SUBDIRECTORY(osgois)              # OSG & OIS
+#ADD_SUBDIRECTORY(osgnewton)           # OSG & Newton
 ADD_SUBDIRECTORY(osgphysx3)           # OSG & Nvidia PhysX 3.x
 ADD_SUBDIRECTORY(osgspark)            # OSG & Spark Particle
-#ADD_SUBDIRECTORY(osgsqllite)          # OSG & SQL Lite
 ADD_SUBDIRECTORY(osgtuio)             # OSG & TUIO
 #ADD_SUBDIRECTORY(osgtriton)           # OSG & Sundog Triton
 ADD_SUBDIRECTORY(osgvlc)              # OSG & libVLC SDK
@@ -102,3 +104,4 @@ ENDMACRO(START_LIBRARY)
 
 ADD_SUBDIRECTORY(osgdb_assimp)        # OSG & Open Asset Import Library
 ADD_SUBDIRECTORY(osgdb_freeimage)     # OSG & FreeImage
+#ADD_SUBDIRECTORY(osgsqllite)          # OSG & SQL Lite
