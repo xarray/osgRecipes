@@ -52,6 +52,7 @@ The third-party libraries that can be embedded with OSG are listed here for down
 * AssImp (a library to import various well-known 3D model formats): http://assimp.sourceforge.net/
 * Awesomium (a web-browser framework for in-app browsing and HTML UIs): http://awesomium.com/
 * FreeImage (a library supporting popular image formats): http://freeimage.sourceforge.net/
+* libGizmo (gizmo control library for 3D object manipulation): https://github.com/CedricGuillemet/LibGizmo
 * Microsoft Kinect SDK: http://www.microsoft.com/en-us/kinectforwindows/develop/developer-downloads.aspx
 * MyGUI (a fast, flexible and simple GUI): http://mygui.info/
 * NVIDIA PhysX (a well-rounded physics engine, version 3.2): http://developer.nvidia.com/physx-downloads

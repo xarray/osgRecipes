@@ -63,14 +63,16 @@ ADD_SUBDIRECTORY(osgawesomium)        # OSG & Awesomium
 #ADD_SUBDIRECTORY(osgdirectwrite)      # OSG & Microsoft DirectWrite
 #ADD_SUBDIRECTORY(osggameswf)          # OSG & GameSWF
 #ADD_SUBDIRECTORY(osgguichan)          # OSG & GUIChan
-#ADD_SUBDIRECTORY(osggimzo)            # OSG & libGimzo
+ADD_SUBDIRECTORY(osggizmo)            # OSG & libGizmo
 #ADD_SUBDIRECTORY(osgmini)             # OSG & libMini
 ADD_SUBDIRECTORY(osgmskinect)         # OSG & Microsoft Kinect SDK
 ADD_SUBDIRECTORY(osgmygui)            # OSG & MyGUI
-#ADD_SUBDIRECTORY(osgnurbs)            # OSG & openNURBS
-#ADD_SUBDIRECTORY(osgois)              # OSG & OIS
 #ADD_SUBDIRECTORY(osgnewton)           # OSG & Newton
 ADD_SUBDIRECTORY(osgphysx3)           # OSG & Nvidia PhysX 3.x
+#ADD_SUBDIRECTORY(osgnurbs)            # OSG & openNURBS
+#ADD_SUBDIRECTORY(osgois)              # OSG & OIS
+#ADD_SUBDIRECTORY(osgrecastnavigation) # OSG & RecastNavigation
+#ADD_SUBDIRECTORY(osgrvo2)             # OSG & RVO2
 ADD_SUBDIRECTORY(osgspark)            # OSG & Spark Particle
 ADD_SUBDIRECTORY(osgtuio)             # OSG & TUIO
 #ADD_SUBDIRECTORY(osgtriton)           # OSG & Sundog Triton
