@@ -66,6 +66,7 @@ ADD_SUBDIRECTORY(osgawesomium)        # OSG & Awesomium
 #ADD_SUBDIRECTORY(osgguichan)          # OSG & GUIChan
 ADD_SUBDIRECTORY(osggizmo)            # OSG & libGizmo
 #ADD_SUBDIRECTORY(osgmini)             # OSG & libMini
+ADD_SUBDIRECTORY(osgmicropather)      # OSG & MicroPather
 ADD_SUBDIRECTORY(osgmskinect)         # OSG & Microsoft Kinect SDK
 ADD_SUBDIRECTORY(osgmygui)            # OSG & MyGUI
 #ADD_SUBDIRECTORY(osgnewton)           # OSG & Newton Physics

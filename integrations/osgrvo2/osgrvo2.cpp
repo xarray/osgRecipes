@@ -165,8 +165,11 @@ int main( int argc, char** argv )
     }
     
     // Create ground and obstacles
+    osg::ref_ptr<osg::ShapeDrawable> groundShape = new osg::ShapeDrawable(new osg::Box(osg::Vec3(), 200.0f, 200.0f, 0.5f) );
+    groundShape->setColor( osg::Vec4(0.2f, 0.2f, 0.2f, 0.2f) );
+    
     osg::ref_ptr<osg::Geode> ground = new osg::Geode;
-    ground->addDrawable( new osg::ShapeDrawable(new osg::Box(osg::Vec3(), 200.0f, 200.0f, 0.5f)) );
+    ground->addDrawable( groundShape.get() );
     scene->addChild( ground.get() );
     
     for ( unsigned int i=0; i<24; ++i )
