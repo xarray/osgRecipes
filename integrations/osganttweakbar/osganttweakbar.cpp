@@ -191,5 +191,5 @@ int main( int argc, char** argv )
     osg::ref_ptr<TwGUIManager> twGUI = new TwGUIManager( scene.get() ); 
     viewer.addEventHandler( twGUI.get() );
     viewer.getCamera()->setFinalDrawCallback( twGUI.get() );
-	return viewer.run();
+    return viewer.run();
 }
