@@ -75,7 +75,7 @@ public:
         
         // Read scene nodes recursively
         TextureMap textures;
-        osg::Node* root = traverseAIScene( aiScene, aiScene->mRootNode, textures );
+        osg::Node* root = traverseAIScene( fileName, aiScene, aiScene->mRootNode, textures );
         return root;
     }
     
@@ -89,7 +89,68 @@ public:
     }
     
 protected:
-    osg::Node* traverseAIScene( const struct aiScene* aiScene, const struct aiNode* aiNode, TextureMap& textures ) const
+
+    //Adapted from osgEarth/VPB
+    static std::string getFullPath(const std::string& relativeTo, const std::string &relativePath)
+    {
+        if (osgDB::isAbsolutePath(relativePath) || relativeTo.empty())
+        {
+            return relativePath;
+        }
+
+        //If they didn't specify a relative path, just return the relativeTo
+        if (relativePath.empty()) return relativeTo;
+
+
+        //Note:  Modified from VPB
+
+        //Concatinate the paths together
+        std::string filename;
+        if ( !osgDB::containsServerAddress( relativeTo ) )
+            filename = osgDB::concatPaths( osgDB::getFilePath( osgDB::getRealPath( relativeTo )), relativePath);
+        else
+            filename = osgDB::concatPaths( osgDB::getFilePath( relativeTo ), relativePath);
+
+
+        std::list<std::string> directories;
+        int start = 0;
+        for (unsigned int i = 0; i < filename.size(); ++i)
+        {
+            if (filename[i] == '\\' || filename[i] == '/')
+            {
+                //Get the current directory
+                std::string dir = filename.substr(start, i-start);
+
+                if (dir != "..")
+                {
+                    if (dir != ".")
+                    {
+                        directories.push_back(dir);
+                    }
+                }
+                else if (!directories.empty())
+                {
+                    directories.pop_back();
+                }
+                start = i + 1;
+            }
+        }
+
+        std::string path;
+        for (std::list<std::string>::iterator itr = directories.begin();
+            itr != directories.end();
+            ++itr)
+        {
+            path += *itr;
+            path += "/";
+        }
+
+        path += filename.substr(start, std::string::npos);
+
+        return path;
+    }
+
+    osg::Node* traverseAIScene( const std::string& filename, const struct aiScene* aiScene, const struct aiNode* aiNode, TextureMap& textures ) const
     {
         osg::Geode* geode = new osg::Geode;
         for ( unsigned int n=0; n<aiNode->mNumMeshes; ++n )
@@ -213,6 +274,12 @@ protected:
                 if ( texFound!=AI_SUCCESS ) break;
                 
                 std::string texFile(path.data);
+
+                if (!osgDB::isAbsolutePath( texFile ) )
+                {
+                    texFile = getFullPath( filename, texFile );
+                }
+                
                 TextureMap::iterator itr = textures.find(texFile);
                 if ( itr==textures.end() )
                 {
@@ -271,7 +338,7 @@ protected:
         mt->setMatrix( osg::Matrixf((float*)&m) );
         for ( unsigned int n=0; n<aiNode->mNumChildren; ++n )
         {
-            osg::Node* child = traverseAIScene( aiScene, aiNode->mChildren[n], textures );
+            osg::Node* child = traverseAIScene( filename, aiScene, aiNode->mChildren[n], textures );
             if ( child ) mt->addChild( child );
         }
         mt->addChild( geode );

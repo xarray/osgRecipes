@@ -8,7 +8,10 @@ IF(COMMAND CMAKE_POLICY)
 ENDIF(COMMAND CMAKE_POLICY)
 
 # The OpenSceneGraph 3.0 Cookbook Source code
-ADD_SUBDIRECTORY(cookbook)
+OPTION(BUILD_COOKBOOK "Build Cookbook Examples" ON)
+IF (BUILD_COOKBOOK)
+	ADD_SUBDIRECTORY(cookbook)
+ENDIF(BUILD_COOKBOOK)
 
 # The integration examples
 ADD_SUBDIRECTORY(integrations)
