@@ -56,31 +56,6 @@ MACRO(START_EXAMPLE)
 
 ENDMACRO(START_EXAMPLE)
 
-#ADD_SUBDIRECTORY(osganimata)          # OSG & Animata
-ADD_SUBDIRECTORY(osganttweakbar)      # OSG & AntTweakBar
-ADD_SUBDIRECTORY(osgawesomium)        # OSG & Awesomium
-#ADD_SUBDIRECTORY(osgberkelium)        # OSG & Berkelium
-#ADD_SUBDIRECTORY(osgbox2d)            # OSG & Box2D
-#ADD_SUBDIRECTORY(osgdirectwrite)      # OSG & Microsoft DirectWrite
-#ADD_SUBDIRECTORY(osggameswf)          # OSG & GameSWF
-#ADD_SUBDIRECTORY(osgguichan)          # OSG & GUIChan
-ADD_SUBDIRECTORY(osggizmo)            # OSG & libGizmo
-#ADD_SUBDIRECTORY(osgmini)             # OSG & libMini
-ADD_SUBDIRECTORY(osgmicropather)      # OSG & MicroPather
-ADD_SUBDIRECTORY(osgmskinect)         # OSG & Microsoft Kinect SDK
-ADD_SUBDIRECTORY(osgmygui)            # OSG & MyGUI
-#ADD_SUBDIRECTORY(osgnewton)           # OSG & Newton Physics
-ADD_SUBDIRECTORY(osgphysx3)           # OSG & Nvidia PhysX 3.x
-#ADD_SUBDIRECTORY(osgnurbs)            # OSG & openNURBS
-#ADD_SUBDIRECTORY(osgois)              # OSG & OIS
-ADD_SUBDIRECTORY(osgrvo2)             # OSG & RVO2
-ADD_SUBDIRECTORY(osgspark)            # OSG & Spark Particle
-ADD_SUBDIRECTORY(osgtuio)             # OSG & TUIO
-#ADD_SUBDIRECTORY(osgtriton)           # OSG & Sundog Triton
-ADD_SUBDIRECTORY(osgvlc)              # OSG & libVLC SDK
-#ADD_SUBDIRECTORY(osgwoody3d)          # OSG & Woody3D
-#ADD_SUBDIRECTORY(osgxaos)             # OSG & XaoS
-
 MACRO(START_LIBRARY)
 
     INCLUDE_DIRECTORIES(${EXTERNAL_INCLUDE_DIR})
@@ -105,6 +80,34 @@ MACRO(START_LIBRARY)
 
 ENDMACRO(START_LIBRARY)
 
+# Wave 1
+ADD_SUBDIRECTORY(osganttweakbar)      # OSG & AntTweakBar
+ADD_SUBDIRECTORY(osgawesomium)        # OSG & Awesomium
+ADD_SUBDIRECTORY(osgmskinect)         # OSG & Microsoft Kinect SDK
+ADD_SUBDIRECTORY(osgphysx3)           # OSG & Nvidia PhysX 3.x
+ADD_SUBDIRECTORY(osgspark)            # OSG & Spark Particle
+ADD_SUBDIRECTORY(osgtuio)             # OSG & TUIO
+ADD_SUBDIRECTORY(osgvlc)              # OSG & libVLC SDK
 ADD_SUBDIRECTORY(osgdb_assimp)        # OSG & Open Asset Import Library
 ADD_SUBDIRECTORY(osgdb_freeimage)     # OSG & FreeImage
+
+# Wave 2
+ADD_SUBDIRECTORY(osggizmo)            # OSG & libGizmo
+ADD_SUBDIRECTORY(osgmicropather)      # OSG & MicroPather
+ADD_SUBDIRECTORY(osgmygui)            # OSG & MyGUI
+ADD_SUBDIRECTORY(osgrvo2)             # OSG & RVO2
 ADD_SUBDIRECTORY(osgdb_otl)           # OSG & Oracle/ODBC/DB2 Template Library
+
+#ADD_SUBDIRECTORY(osganimata)          # OSG & Animata
+#ADD_SUBDIRECTORY(osgberkelium)        # OSG & Berkelium
+#ADD_SUBDIRECTORY(osgbox2d)            # OSG & Box2D
+#ADD_SUBDIRECTORY(osgdirectwrite)      # OSG & Microsoft DirectWrite
+#ADD_SUBDIRECTORY(osggameswf)          # OSG & GameSWF
+#ADD_SUBDIRECTORY(osgguichan)          # OSG & GUIChan
+#ADD_SUBDIRECTORY(osgmini)             # OSG & libMini
+#ADD_SUBDIRECTORY(osgnewton)           # OSG & Newton Physics
+#ADD_SUBDIRECTORY(osgnurbs)            # OSG & openNURBS
+#ADD_SUBDIRECTORY(osgois)              # OSG & OIS
+#ADD_SUBDIRECTORY(osgtriton)           # OSG & Sundog Triton
+#ADD_SUBDIRECTORY(osgwoody3d)          # OSG & Woody3D
+#ADD_SUBDIRECTORY(osgxaos)             # OSG & XaoS

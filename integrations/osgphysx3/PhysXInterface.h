@@ -15,6 +15,8 @@ class PhysXInterface : public osg::Referenced
 {
 public:
     static PhysXInterface* instance();
+    physx::PxPhysics* getPhysicsSDK() { return _physicsSDK; }
+    physx::PxScene* getScene() { return _scene; }
     
     void createWorld( const osg::Plane& plane, const osg::Vec3& gravity );
     void createBox( int id, const osg::Vec3& dim, double mass );

@@ -63,17 +63,33 @@ void* MYGUIManager::loadImage( int& width, int& height, MyGUI::PixelFormat& form
         unsigned int num = 0;
         switch ( image->getPixelFormat() )
         {
-        case GL_LUMINANCE: case GL_ALPHA: MyGUI::PixelFormat::L8; num = 1; break;
-        case GL_LUMINANCE_ALPHA: MyGUI::PixelFormat::L8A8; num = 2; break;
+        case GL_LUMINANCE: case GL_ALPHA: format = MyGUI::PixelFormat::L8; num = 1; break;
+        case GL_LUMINANCE_ALPHA: format = MyGUI::PixelFormat::L8A8; num = 2; break;
         case GL_RGB: format = MyGUI::PixelFormat::R8G8B8; num = 3; break;
         case GL_RGBA: format = MyGUI::PixelFormat::R8G8B8A8; num = 4; break;
         default: format = MyGUI::PixelFormat::Unknow; return result;
         }
         
         unsigned int size = width * height * num;
-        result = new unsigned char[size];
+        unsigned char* dest = new unsigned char[size];
         image->flipVertical();
-        memcpy( result, image->data(), size );
+        if ( image->getPixelFormat()==GL_RGB || image->getPixelFormat()==GL_RGBA )
+        {
+            // FIXME: I don't an additional conversion here but...
+            // MyGUI will automatically consider it as BGR so I should do such stupid thing
+            unsigned int step = (image->getPixelFormat()==GL_RGB ? 3 : 4);
+            unsigned char* src = image->data();
+            for ( unsigned int i=0; i<size; i+=step )
+            {
+                dest[i+0] = src[i+2];
+                dest[i+1] = src[i+1];
+                dest[i+2] = src[i+0];
+                if ( step==4 ) dest[i+3] = src[i+3];
+            }
+        }
+        else
+            memcpy( dest, image->data(), size );
+        result = dest;
     }
     return result;
 }
@@ -86,8 +102,8 @@ void MYGUIManager::saveImage( int width, int height, MyGUI::PixelFormat format, 
     {
     case MyGUI::PixelFormat::L8: pixelFormat = GL_ALPHA; internalFormat = 1; break;
     case MyGUI::PixelFormat::L8A8: pixelFormat = GL_LUMINANCE_ALPHA; internalFormat = 2; break;
-    case MyGUI::PixelFormat::R8G8B8: pixelFormat = GL_RGB; internalFormat = 3; break;
-    case MyGUI::PixelFormat::R8G8B8A8: pixelFormat = GL_RGBA; internalFormat = 4; break;
+    case MyGUI::PixelFormat::R8G8B8: pixelFormat = GL_BGR; internalFormat = 3; break;
+    case MyGUI::PixelFormat::R8G8B8A8: pixelFormat = GL_BGRA; internalFormat = 4; break;
     default: return;
     }
     

@@ -7,10 +7,10 @@
 
 #include "PhysXInterface.h"
 
-class PhysicsUpdater : public osgGA::GUIEventHandler
+class SampleRigidUpdater : public osgGA::GUIEventHandler
 {
 public:
-    PhysicsUpdater( osg::Group* root ) : _root(root) {}
+    SampleRigidUpdater( osg::Group* root ) : _root(root) {}
     
     void addGround( const osg::Vec3& gravity )
     {
@@ -90,26 +90,47 @@ protected:
     osg::observer_ptr<osg::Group> _root;
 };
 
+extern osgGA::GUIEventHandler* createSampleCloth( osg::Group* root );
+
 int main( int argc, char** argv )
 {
-    osg::ref_ptr<osg::Group> root = new osg::Group;
-    osg::ref_ptr<PhysicsUpdater> updater = new PhysicsUpdater( root.get() );
+    osg::ArgumentParser arguments( &argc, argv );
     
-    updater->addGround( osg::Vec3(0.0f, 0.0f,-9.8f) );
-    for ( unsigned int i=0; i<10; ++i )
+    int mode = 1;
+    if ( arguments.read("--rigid") ) mode = 0;
+    else if ( arguments.read("--cloth") ) mode = 1;
+    
+    osg::ref_ptr<osg::Group> root = new osg::Group;
+    osg::ref_ptr<osgGA::GUIEventHandler> updater;
+    switch ( mode )
     {
-        for ( unsigned int j=0; j<10; ++j )
+    case 0:
         {
-            updater->addPhysicsBox( new osg::Box(osg::Vec3(), 0.99f),
-                osg::Vec3((float)i, 0.0f, (float)j+0.5f), osg::Vec3(), 1.0f );
+            SampleRigidUpdater* rigidUpdater = new SampleRigidUpdater( root.get() );
+            rigidUpdater->addGround( osg::Vec3(0.0f, 0.0f,-9.8f) );
+            for ( unsigned int i=0; i<10; ++i )
+            {
+                for ( unsigned int j=0; j<10; ++j )
+                {
+                    rigidUpdater->addPhysicsBox( new osg::Box(osg::Vec3(), 0.99f),
+                        osg::Vec3((float)i, 0.0f, (float)j+0.5f), osg::Vec3(), 1.0f );
+                }
+            }
+            updater = rigidUpdater;
         }
+        break;
+    case 1:
+        updater = createSampleCloth( root.get() );
+        break;
+    default: break;
     }
     
     osgViewer::Viewer viewer;
     viewer.addEventHandler( new osgGA::StateSetManipulator(viewer.getCamera()->getOrCreateStateSet()) );
     viewer.addEventHandler( new osgViewer::StatsHandler );
     viewer.addEventHandler( new osgViewer::WindowSizeHandler );
-    viewer.addEventHandler( updater.get() );
+    if ( updater.valid() )
+        viewer.addEventHandler( updater.get() );
     viewer.setSceneData( root.get() );
     return viewer.run();
 }

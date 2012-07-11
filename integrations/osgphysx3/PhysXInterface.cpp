@@ -153,5 +153,5 @@ osg::Matrix PhysXInterface::getMatrix( int id )
 void PhysXInterface::simulate( double step )
 {
     _scene->simulate( step );
-    _scene->fetchResults();
+    while( !_scene->fetchResults() ) { /* do nothing but wait */ }
 }
