@@ -94,6 +94,7 @@ ADD_SUBDIRECTORY(osgdb_assimp)        # OSG & Open Asset Import Library
 ADD_SUBDIRECTORY(osgdb_freeimage)     # OSG & FreeImage
 
 # Wave 2
+ADD_SUBDIRECTORY(osgbullet)           # OSG & Bullet Physics Engine
 ADD_SUBDIRECTORY(osggizmo)            # OSG & libGizmo
 ADD_SUBDIRECTORY(osgmicropather)      # OSG & MicroPather
 ADD_SUBDIRECTORY(osgmygui)            # OSG & MyGUI
