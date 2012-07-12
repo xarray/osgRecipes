@@ -96,7 +96,7 @@ int main( int argc, char** argv )
 {
     osg::ArgumentParser arguments( &argc, argv );
     
-    int mode = 1;
+    int mode = 0;
     if ( arguments.read("--rigid") ) mode = 0;
     else if ( arguments.read("--cloth") ) mode = 1;
     

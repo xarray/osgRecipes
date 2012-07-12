@@ -7,8 +7,8 @@
 #include <osgViewer/ViewerEventHandlers>
 #include <osgViewer/Viewer>
 
-#include "TUIO/TUIOClient.h"
-#include "TUIO/TUIOListener.h"
+#include "TUIO/TuioClient.h"
+#include "TUIO/TuioListener.h"
 
 class ClientListener : public TUIO::TuioListener
 {
@@ -89,6 +89,7 @@ public:
                 }
             }
             break;
+        default: break;
         }
         return false;
     }

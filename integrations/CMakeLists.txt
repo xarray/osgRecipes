@@ -80,6 +80,8 @@ MACRO(START_LIBRARY)
 
 ENDMACRO(START_LIBRARY)
 
+OPTION(BUILD_WITH_LITTLE_ENDIAN "Build all examples with little endian configuration (may only affect a few examples, but be careful to set)" ON)
+
 # Wave 1
 ADD_SUBDIRECTORY(osganttweakbar)      # OSG & AntTweakBar
 ADD_SUBDIRECTORY(osgawesomium)        # OSG & Awesomium
@@ -98,6 +100,7 @@ ADD_SUBDIRECTORY(osgmygui)            # OSG & MyGUI
 ADD_SUBDIRECTORY(osgrvo2)             # OSG & RVO2
 ADD_SUBDIRECTORY(osgdb_otl)           # OSG & Oracle/ODBC/DB2 Template Library
 
+# TODO List
 #ADD_SUBDIRECTORY(osganimata)          # OSG & Animata
 #ADD_SUBDIRECTORY(osgberkelium)        # OSG & Berkelium
 #ADD_SUBDIRECTORY(osgbox2d)            # OSG & Box2D
