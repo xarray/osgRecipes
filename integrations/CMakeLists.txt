@@ -98,6 +98,8 @@ ADD_SUBDIRECTORY(osgbullet)           # OSG & Bullet Physics Engine
 ADD_SUBDIRECTORY(osggizmo)            # OSG & libGizmo
 ADD_SUBDIRECTORY(osgmicropather)      # OSG & MicroPather
 ADD_SUBDIRECTORY(osgmygui)            # OSG & MyGUI
+ADD_SUBDIRECTORY(osgnikinect)         # OSG & OpenNI
+ADD_SUBDIRECTORY(osgngplant)          # OSG & ngPlant
 ADD_SUBDIRECTORY(osgrvo2)             # OSG & RVO2
 ADD_SUBDIRECTORY(osgdb_otl)           # OSG & Oracle/ODBC/DB2 Template Library
 
