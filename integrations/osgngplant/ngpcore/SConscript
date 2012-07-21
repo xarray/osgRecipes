@@ -1,0 +1,41 @@
+from sctool.SConcompat import *
+
+NGPCORE_SRC = Split("""
+p3dmath.cpp
+p3dmathrng.cpp
+p3dmathspline.cpp
+p3dplant.cpp
+p3dmodel.cpp
+p3dmodelstemtube.cpp
+p3dmodelstemquad.cpp
+p3dmodelstemwings.cpp
+p3dmodelstemgmesh.cpp
+p3dbalgbase.cpp
+p3dbalgstd.cpp
+p3dbalgwings.cpp
+p3diostream.cpp
+p3diostreamadd.cpp
+p3dexcept.cpp
+p3dhli.cpp
+p3dgmeshdata.cpp
+""")
+
+NGPCORE_INCLUDES = Split("""
+#
+""")
+
+Import('*')
+
+NGPCoreEnv = EnvClone(BaseEnv)
+NGPCoreEnv.Append(CPPPATH=NGPCORE_INCLUDES)
+
+if CC_WARN_FLAGS != '':
+   NGPCoreEnv.Append(CXXFLAGS=CC_WARN_FLAGS)
+if CC_OPT_FLAGS != '':
+   NGPCoreEnv.Append(CXXFLAGS=CC_OPT_FLAGS)
+
+ngpcore = NGPCoreEnv.StaticLibrary(target='ngpcore',source=NGPCORE_SRC)
+
+Default(ngpcore)
+Clean(ngpcore,['.sconsign'])
+

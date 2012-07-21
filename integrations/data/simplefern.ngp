@@ -1,0 +1,97 @@
+P3D 0 2
+BaseSeed 123
+BranchingAlg __None__
+StemModel Tube
+Length 0.130000
+LengthV 0.000000
+LengthOffsetDep CubicSpline
+CPCount 2
+Point 0.000000 1.000000
+Point 1.000000 1.000000
+AxisVariation 0.000000
+AxisResolution 5
+ProfileScaleBase 0.110000
+ProfileScaleCurve CubicSpline
+CPCount 2
+Point 0.000000 1.000000
+Point 1.000000 0.000000
+ProfileResolution 4
+PhototropismMode 0
+PhototropismCurve CubicSpline
+CPCount 2
+Point 0.000000 0.000000
+Point 1.000000 0.000000
+BaseTexUMode 0
+BaseTexUScale 1.000000
+BaseTexVMode 0
+BaseTexVScale 1.000000
+Material Simple
+BaseColor 0.000000 0.500000 0.000000
+BaseTexture __None__
+DoubleSided false
+Transparent false
+Billboard false
+BranchModelCount 1
+BranchingAlg Std
+Density 100.000000
+DensityV 0.300000
+Multiplicity 8
+RevAngle 0.000000
+RevAngleV 0.000000
+RotAngle 0.000000
+MinOffset 0.000000
+MaxOffset 1.000000
+DeclinationCurve CubicSpline
+CPCount 2
+Point 0.000000 0.000000
+Point 1.000000 0.423077
+DeclinationV 0.490000
+StemModel Tube
+Length 22.089989
+LengthV 0.170000
+LengthOffsetDep CubicSpline
+CPCount 2
+Point 0.000000 1.000000
+Point 1.000000 1.000000
+AxisVariation 0.000000
+AxisResolution 5
+ProfileScaleBase 0.010000
+ProfileScaleCurve CubicSpline
+CPCount 2
+Point 0.000000 1.000000
+Point 1.000000 0.000000
+ProfileResolution 3
+PhototropismMode 1
+PhototropismCurve CubicSpline
+CPCount 2
+Point 0.000000 0.000000
+Point 1.000000 0.269231
+BaseTexUMode 0
+BaseTexUScale 1.000000
+BaseTexVMode 0
+BaseTexVScale 1.000000
+Material Simple
+BaseColor 0.000000 0.500000 0.000000
+BaseTexture __None__
+DoubleSided false
+Transparent false
+Billboard false
+BranchModelCount 1
+BranchingAlg Wings
+RotAngle 1.570796
+StemModel Wings
+WingsAngle 0.000000
+Width 1.000000
+SectionCount 1
+Curvature CubicSpline
+CPCount 2
+Point 0.000000 0.500000
+Point 1.000000 0.500000
+Thickness 0.000000
+Material Simple
+BaseColor 0.700000 0.700000 0.700000
+BaseTexture fernleaf.tga
+DoubleSided true
+Transparent true
+Billboard false
+BranchModelCount 0

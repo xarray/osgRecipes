@@ -1,0 +1,107 @@
+P3D 0 1
+BaseSeed 973
+BranchingAlg __None__
+StemModel Tube
+Length 15.000000
+LengthV 0.100000
+LengthOffsetDep CubicSpline
+CPCount 2
+Point 0.000000 1.000000
+Point 1.000000 1.000000
+AxisVariation 0.020000
+AxisResolution 23
+ProfileScaleBase 0.640001
+ProfileScaleCurve CubicSpline
+CPCount 4
+Point 0.000000 1.000000
+Point 0.876923 0.733333
+Point 0.953846 0.500000
+Point 1.000000 0.000000
+ProfileResolution 8
+PhototropismMode 0
+PhototropismCurve CubicSpline
+CPCount 2
+Point 0.000000 0.300000
+Point 1.000000 0.333333
+BaseTexUMode 0
+BaseTexUScale 1.000000
+BaseTexVMode 0
+BaseTexVScale 1.000000
+Material Simple
+BaseColor 0.000000 0.260000 0.000000
+BaseTexture __None__
+DoubleSided false
+Transparent false
+Billboard false
+BranchModelCount 1
+BranchingAlg Std
+Density 32.190018
+DensityV 0.140000
+RevAngle 0.610865
+RevAngleV 0.080000
+RotAngle 1.570796
+MinOffset 0.890000
+MaxOffset 0.960000
+DeclinationCurve CubicSpline
+CPCount 4
+Point 0.000000 0.500000
+Point 0.761538 0.433333
+Point 0.907692 0.500000
+Point 1.000000 0.066667
+DeclinationV 0.270000
+StemModel Tube
+Length 0.500000
+LengthV 0.050000
+LengthOffsetDep CubicSpline
+CPCount 2
+Point 0.000000 1.000000
+Point 1.000000 1.000000
+AxisVariation 0.020000
+AxisResolution 5
+ProfileScaleBase 0.330000
+ProfileScaleCurve CubicSpline
+CPCount 4
+Point 0.000000 1.000000
+Point 0.807692 0.766667
+Point 0.915385 0.600000
+Point 1.000000 0.000000
+ProfileResolution 5
+PhototropismMode 1
+PhototropismCurve CubicSpline
+CPCount 2
+Point 0.000000 0.100000
+Point 1.000000 0.166667
+BaseTexUMode 0
+BaseTexUScale 1.000000
+BaseTexVMode 0
+BaseTexVScale 1.000000
+Material Simple
+BaseColor 0.000000 0.280001 0.000000
+BaseTexture __None__
+DoubleSided false
+Transparent false
+Billboard false
+BranchModelCount 1
+BranchingAlg Std
+Density 10.170004
+DensityV 0.060000
+RevAngle 3.141593
+RevAngleV 0.020000
+RotAngle 0.000000
+MinOffset 0.000000
+MaxOffset 0.970000
+DeclinationCurve CubicSpline
+CPCount 2
+Point 0.000000 0.233333
+Point 1.000000 0.233333
+DeclinationV 0.110000
+StemModel Quad
+Length 1.649999
+Width 0.210000
+Material Simple
+BaseColor 0.700000 0.700000 0.700000
+BaseTexture greenleaf.tga
+DoubleSided true
+Transparent true
+Billboard false
+BranchModelCount 0
