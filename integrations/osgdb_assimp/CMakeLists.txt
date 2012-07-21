@@ -1,4 +1,4 @@
-FIND_PATH(ASSIMP_INCLUDE_DIR assimp.h)
+FIND_PATH(ASSIMP_INCLUDE_DIR assimp/ai_assert.h)
 FIND_LIBRARY(ASSIMP_LIBRARY assimp)
 OPTION(ASSIMP_USE_STATIC "Link with static version of AssImp" OFF)
 

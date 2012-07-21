@@ -1,7 +1,8 @@
-#include <assimp.hpp>
-#include <aiScene.h>
-#include <aiPostProcess.h>
-#include <DefaultLogger.h>
+#include <assimp/ai_assert.h>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+#include <assimp/Importer.hpp>
+#include <assimp/DefaultLogger.hpp>
 
 #include <osg/PolygonMode>
 #include <osg/Material>
