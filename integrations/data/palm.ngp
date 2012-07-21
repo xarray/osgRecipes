@@ -100,7 +100,7 @@ Length 1.649999
 Width 0.210000
 Material Simple
 BaseColor 0.700000 0.700000 0.700000
-BaseTexture greenleaf.tga
+BaseTexture data/greenleaf.tga
 DoubleSided true
 Transparent true
 Billboard false

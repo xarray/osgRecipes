@@ -50,6 +50,7 @@ The third-party libraries that can be embedded with OSG are listed here for down
 * MicroPather ( a path finder and A* solver): already included in the source code
 * Microsoft Kinect SDK: http://www.microsoft.com/en-us/kinectforwindows/develop/developer-downloads.aspx
 * MyGUI (a fast, flexible and simple GUI): http://mygui.info/
+* ngPlant (a plant modeling software): core library already included in the source code
 * NVIDIA PhysX (a well-rounded physics engine, version 3.2): http://developer.nvidia.com/physx-downloads
 * OpenNI (natural interaction devices middleware, including Kinect): http://www.openni.org/
 * OTL (Oracle, Odbc and DB2-CLI template library): already included in the source code

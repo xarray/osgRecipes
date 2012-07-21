@@ -90,7 +90,7 @@ Point 1.000000 0.500000
 Thickness 0.000000
 Material Simple
 BaseColor 0.700000 0.700000 0.700000
-BaseTexture fernleaf.tga
+BaseTexture data/fernleaf.tga
 DoubleSided true
 Transparent true
 Billboard false
