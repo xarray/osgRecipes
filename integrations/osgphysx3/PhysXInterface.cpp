@@ -1,3 +1,4 @@
+#include <extensions/PxVisualDebuggerExt.h>
 #include <osg/ref_ptr>
 #include "PhysXInterface.h"
 
@@ -42,6 +43,18 @@ PhysXInterface::PhysXInterface()
     {
         OSG_WARN << "Unable to initialize PhysX extensions." << std::endl;
     }
+    
+#ifdef _DEBUG
+    if ( _physicsSDK->getPvdConnectionManager() )
+    {
+        PxVisualDebuggerExt::createConnection(
+            _physicsSDK->getPvdConnectionManager(), "localhost", 5425, 10000 );
+    }
+    else
+    {
+        OSG_WARN << "Unable to start the PhysX visual debugger." << std::endl;
+    }
+#endif
 }
 
 PhysXInterface::~PhysXInterface()

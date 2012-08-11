@@ -111,6 +111,7 @@ ADD_SUBDIRECTORY(osgdb_otl)           # OSG & Oracle/ODBC/DB2 Template Library
 #ADD_SUBDIRECTORY(osggameswf)          # OSG & GameSWF
 #ADD_SUBDIRECTORY(osgguichan)          # OSG & GUIChan
 #ADD_SUBDIRECTORY(osgmini)             # OSG & libMini
+#ADD_SUBDIRECTORY(osgmupdf)            # OSG & MuPDF
 #ADD_SUBDIRECTORY(osgnewton)           # OSG & Newton Physics
 #ADD_SUBDIRECTORY(osgnurbs)            # OSG & openNURBS
 #ADD_SUBDIRECTORY(osgois)              # OSG & OIS
