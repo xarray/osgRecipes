@@ -76,7 +76,7 @@ public:
         
         // Read scene nodes recursively
         TextureMap textures;
-        osg::Node* root = traverseAIScene( fileName, aiScene, aiScene->mRootNode, textures );
+        osg::Node* root = traverseAIScene( fileName, aiScene, aiScene->mRootNode, textures, options );
         return root;
     }
     
@@ -151,7 +151,7 @@ protected:
         return path;
     }
 
-    osg::Node* traverseAIScene( const std::string& filename, const struct aiScene* aiScene, const struct aiNode* aiNode, TextureMap& textures ) const
+    osg::Node* traverseAIScene( const std::string& filename, const struct aiScene* aiScene, const struct aiNode* aiNode, TextureMap& textures, const osgDB::Options* options ) const
     {
         osg::Geode* geode = new osg::Geode;
         for ( unsigned int n=0; n<aiNode->mNumMeshes; ++n )
@@ -290,7 +290,7 @@ protected:
                     tex2D->setWrap( osg::Texture::WRAP_R, getWrapMode(wrapMode[2]) );
                     tex2D->setFilter( osg::Texture::MIN_FILTER, osg::Texture::LINEAR_MIPMAP_LINEAR );
                     tex2D->setFilter( osg::Texture::MAG_FILTER, osg::Texture::LINEAR );
-                    tex2D->setImage( osgDB::readImageFile(texFile) );
+                    tex2D->setImage( osgDB::readImageFile(texFile, options) );
                     textures[texFile] = tex2D;
                 }
                 
@@ -339,7 +339,7 @@ protected:
         mt->setMatrix( osg::Matrixf((float*)&m) );
         for ( unsigned int n=0; n<aiNode->mNumChildren; ++n )
         {
-            osg::Node* child = traverseAIScene( filename, aiScene, aiNode->mChildren[n], textures );
+            osg::Node* child = traverseAIScene( filename, aiScene, aiNode->mChildren[n], textures, options );
             if ( child ) mt->addChild( child );
         }
         mt->addChild( geode );
