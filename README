@@ -46,9 +46,11 @@ The third-party libraries that can be embedded with OSG are listed here for down
 * AssImp (a library to import various well-known 3D model formats): http://assimp.sourceforge.net/
 * Awesomium (a web-browser framework for in-app browsing and HTML UIs): http://awesomium.com/
 * Box2D (a 2D physics engine for games): http://box2d.org/
+* Bullet (A professional multiphysics library): http://bulletphysics.org/wordpress/
 * FreeImage (a library supporting popular image formats): http://freeimage.sourceforge.net/
 * libGizmo (gizmo control library for 3D object manipulation): https://github.com/CedricGuillemet/LibGizmo
 * MicroPather ( a path finder and A* solver): already included in the source code
+* Microsoft DirectWrite (a text-layout and glyph-rendering API): in the Windows SDK
 * Microsoft Kinect SDK: http://www.microsoft.com/en-us/kinectforwindows/develop/developer-downloads.aspx
 * MyGUI (a fast, flexible and simple GUI): http://mygui.info/
 * ngPlant (a plant modeling software): core library already included in the source code
