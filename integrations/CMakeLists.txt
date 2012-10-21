@@ -107,12 +107,12 @@ ADD_SUBDIRECTORY(osgdb_otl)           # OSG & Oracle/ODBC/DB2 Template Library
 # Wave 3
 #ADD_SUBDIRECTORY(osgberkelium)        # OSG & Berkelium
 ADD_SUBDIRECTORY(osgdirectwrite)      # OSG & Microsoft DirectWrite
-#ADD_SUBDIRECTORY(osgguichan)          # OSG & GUIChan
-#ADD_SUBDIRECTORY(osgmathgl)          # OSG & MathGL
 #ADD_SUBDIRECTORY(osgois)              # OSG & OIS
+#ADD_SUBDIRECTORY(osggls)              # OSG & libGLS
 #ADD_SUBDIRECTORY(osgrecast)           # OSG & Recastnavigation
 #ADD_SUBDIRECTORY(osgroboop)           # OSG & ROBOOP
-#ADD_SUBDIRECTORY(osgsilverlining)     # OSG & Sundog Silverlining
+#ADD_SUBDIRECTORY(osgrtmidi)           # OSG & RT-Midi
+ADD_SUBDIRECTORY(osgsilverlining)     # OSG & Sundog Silverlining
 #ADD_SUBDIRECTORY(osgtriton)           # OSG & Sundog Triton
 
 # TODO List
@@ -120,7 +120,9 @@ ADD_SUBDIRECTORY(osgdirectwrite)      # OSG & Microsoft DirectWrite
 #ADD_SUBDIRECTORY(osgcrogai)           # OSG & Crogai
 #ADD_SUBDIRECTORY(osgdance)            # OSG & DANCE
 #ADD_SUBDIRECTORY(osggameswf)          # OSG & GameSWF
+#ADD_SUBDIRECTORY(osgguichan)          # OSG & GUIChan
 #ADD_SUBDIRECTORY(osgmini)             # OSG & libMini
+#ADD_SUBDIRECTORY(osgmathgl)           # OSG & MathGL
 #ADD_SUBDIRECTORY(osgmupdf)            # OSG & MuPDF
 #ADD_SUBDIRECTORY(osgnewton)           # OSG & Newton Physics
 #ADD_SUBDIRECTORY(osgnurbs)            # OSG & openNURBS

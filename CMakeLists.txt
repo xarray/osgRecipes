@@ -15,3 +15,6 @@ ENDIF(BUILD_COOKBOOK)
 
 # The integration examples
 ADD_SUBDIRECTORY(integrations)
+
+# The shader effect compositor in progress
+ADD_SUBDIRECTORY(effectcompositor)

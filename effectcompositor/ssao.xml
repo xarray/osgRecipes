@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<compositor>
+    <shader name="getdepth_vs" type="vertex">
+        <source>
+        <![CDATA[
+        uniform float nearPlaneValue;
+        uniform float farPlaneValue;
+        varying float depthValue;
+        void main(void)
+        {
+            vec4 vecInEye = gl_ModelViewMatrix * gl_Vertex;
+            depthValue = (-vecInEye.z - nearPlaneValue) / (farPlaneValue - nearPlaneValue);
+            gl_Position = ftransform();
+        }
+        ]]>
+        </source>
+    </shader>
+    
+    <shader name="getdepth_ps" type="fragment">
+        <source>
+        <![CDATA[
+        varying float depthValue;
+        void main(void)
+        {
+            gl_FragColor = vec4(vec3(depthValue), 1.0);
+        }
+        ]]>
+        </source>
+    </shader>
+    
+    <shader name="ssao_vs" type="vertex">
+        <source>
+        <![CDATA[
+        void main(void)
+        {
+           gl_Position = ftransform();
+           gl_TexCoord[0] = gl_MultiTexCoord0;
+        }
+        ]]>
+        </source>
+    </shader>
+    
+    <shader name="ssao_process_ps" type="fragment">
+        <source>
+        <![CDATA[
+        uniform sampler2D depthTex;
+        uniform float nearPlaneValue;
+        uniform float farPlaneValue;
+        uniform float viewportWidth;
+        uniform float viewportHeight;
+        uniform float contrast;
+        
+        float readDepth(in vec2 uv)
+        { return texture2D(depthTex, uv).x; }
+        
+        float compareDepths(in float depthDiff, in float aoMultiplier)
+        {
+           float aoCap = 1.0;
+           float depthTolerance = 0.000125;
+           float aoRange = 10.0; /* units in space the AO effect extends to (this gets divided by the camera far range */
+           float diff = sqrt(clamp(1.0 - depthDiff / (aoRange / (farPlaneValue - nearPlaneValue)), 0.0, 1.0));
+           return min(aoCap, max(0.0, depthDiff - depthTolerance) * aoMultiplier) * diff;
+        }
+        
+        void main(void)
+        {
+            vec2 uv = gl_TexCoord[0].st;
+            float depth = readDepth(uv), d = 0.0;
+            float pw = 1.0 / viewportWidth;
+            float ph = 1.0 / viewportHeight;
+            float aoMultiplier = 1000.0;
+            float aoScale = 1.0;
+            float ao = 0.0;
+            
+            float uvFactor = uv.y + uv.x + (uv.x * uv.y);
+            float q = 0.78 * sin((ao + depth + uvFactor) * viewportWidth);
+            vec2 v1 = vec2(cos(q), sin(q));
+            d = readDepth(v1 * vec2(pw, ph) + uv);
+            ao += compareDepths(depth-d, aoMultiplier) / aoScale;
+            d = readDepth(v1 * vec2(-pw, ph) + uv);
+            ao += compareDepths(depth-d, aoMultiplier) / aoScale;
+            d = readDepth(v1 * vec2(pw, -ph) + uv);
+            ao += compareDepths(depth-d, aoMultiplier) / aoScale;
+            d = readDepth(v1 * vec2(-pw, -ph) + uv);
+            ao += compareDepths(depth-d, aoMultiplier) / aoScale;
+            
+            pw *= 2.0;
+            ph *= 2.0;
+            aoMultiplier *= 0.5;
+            aoScale *= 1.2;
+            
+            q = 0.39 * sin((ao + depth + uvFactor) * viewportHeight);
+            v1 = vec2(cos(q), sin(q));
+            d = readDepth(v1 * vec2(pw, ph) + uv);
+            ao += compareDepths(depth-d, aoMultiplier) / aoScale;
+            d = readDepth(v1 * vec2(-pw, ph) + uv);
+            ao += compareDepths(depth-d, aoMultiplier) / aoScale;
+            d = readDepth(v1 * vec2(pw, -ph) + uv);
+            ao += compareDepths(depth-d, aoMultiplier) / aoScale;
+            d = readDepth(v1 * vec2(-pw, -ph) + uv);
+            ao += compareDepths(depth-d, aoMultiplier) / aoScale;
+            
+            pw *= 2.0;
+            ph *= 2.0;
+            aoMultiplier *= 0.5;
+            aoScale *= 1.2;
+            
+            q = 0.78 * cos((ao + depth + uvFactor) * viewportWidth);
+            v1 = vec2(cos(q), sin(q));
+            d = readDepth(v1 * vec2(pw, ph) + uv);
+            ao += compareDepths(depth-d, aoMultiplier) / aoScale;
+            d = readDepth(v1 * vec2(-pw, ph) + uv);
+            ao += compareDepths(depth-d, aoMultiplier) / aoScale;
+            d = readDepth(v1 * vec2(pw, -ph) + uv);
+            ao += compareDepths(depth-d, aoMultiplier) / aoScale;
+            d = readDepth(v1 * vec2(-pw, -ph) + uv);
+            ao += compareDepths(depth-d, aoMultiplier) / aoScale;
+            
+            pw *= 2.0;
+            ph *= 2.0;
+            aoMultiplier *= 0.5;
+            aoScale *= 1.2;
+            
+            q = 0.39 * cos((ao + depth + uvFactor) * viewportHeight);
+            v1 = vec2(cos(q), sin(q));
+            d = readDepth(v1 * vec2(pw, ph) + uv);
+            ao += compareDepths(depth-d, aoMultiplier) / aoScale;
+            d = readDepth(v1 * vec2(-pw, ph) + uv);
+            ao += compareDepths(depth-d, aoMultiplier) / aoScale;
+            d = readDepth(v1 * vec2(pw, -ph) + uv);
+            ao += compareDepths(depth-d, aoMultiplier) / aoScale;
+            d = readDepth(v1 * vec2(-pw, -ph) + uv);
+            ao += compareDepths(depth-d, aoMultiplier) / aoScale;
+            
+            //gl_FragColor = vec4(depth, depth, depth, 1.0);
+            gl_FragColor = vec4(vec3(pow(1.0 - ao*0.0625, contrast)), 1.0);
+        }
+        ]]>
+        </source>
+    </shader>
+    
+    <shader name="ssao_combine_ps" type="fragment">
+        <source>
+        <![CDATA[
+        uniform sampler2D sceneTex;
+        uniform sampler2D aoTex;
+        uniform float viewportWidth;
+        uniform float viewportHeight;
+        
+        float sum4(in vec4 v) { return v.x+v.y+v.z+v.w; }
+        float max4(in vec4 v) { float a = max(v.x,v.y), b = max(v.z,v.w); return max(a, b); }
+        float min4(in vec4 v) { float a = min(v.x,v.y), b = min(v.z,v.w); return min(a, b); }
+        
+        void main(void)
+        {
+            vec2 invScreenSize = vec2(1.0/viewportWidth, 1.0/viewportHeight);
+            vec2 aoCoord =  gl_FragCoord.xy * invScreenSize;
+            vec4 sceneColor = texture2D(sceneTex, aoCoord);
+            vec4 aoColor = texture2D(aoTex, aoCoord);
+            float off = 5.0 * pow(1.0 - aoColor.z, 3.0);
+            float ssao = aoColor.x;
+            
+            vec4 ssao4;
+            ssao4.x = texture2D(aoTex, vec2((gl_FragCoord.x-off)*invScreenSize.x, (gl_FragCoord.y+off)*invScreenSize.y)).x;
+            ssao4.y = texture2D(aoTex, vec2((gl_FragCoord.x-off)*invScreenSize.x, (gl_FragCoord.y-off)*invScreenSize.y)).x;
+            ssao4.z = texture2D(aoTex, vec2((gl_FragCoord.x+off)*invScreenSize.x, (gl_FragCoord.y-off)*invScreenSize.y)).x;
+            ssao4.w = texture2D(aoTex, vec2((gl_FragCoord.x+off)*invScreenSize.x, (gl_FragCoord.y+off)*invScreenSize.y)).x;
+            ssao = sum4(ssao4) + ssao - 2.0 * max(ssao, max4(ssao4)) - 2.0 * min(ssao, min4(ssao4));
+            gl_FragColor = vec4(vec3(sceneColor.rgb * ssao), sceneColor.a);
+        }
+        ]]>
+        </source>
+    </shader>
+    
+    <uniform name="nearPlaneValue" type="float">
+        <inbuilt_value>near_plane</inbuilt_value>
+    </uniform>
+    
+    <uniform name="farPlaneValue" type="float">
+        <inbuilt_value>far_plane</inbuilt_value>
+    </uniform>
+    
+    <uniform name="viewportWidth" type="float">
+        <inbuilt_value>viewport_width</inbuilt_value>
+    </uniform>
+    
+    <uniform name="viewportHeight" type="float">
+        <inbuilt_value>viewport_height</inbuilt_value>
+    </uniform>
+    
+    <uniform name="contrast" type="float">
+        <value>1.2</value>
+    </uniform>
+    
+    <buffer name="originalScene" type="2d" width="1024" height="1024">
+        <internal_format>rgba</internal_format>
+        <source_format>rgba</source_format>
+        <source_type>ubyte</source_type>
+    </buffer>
+    
+    <buffer name="linearDepth" type="2d" width="1024" height="1024">
+        <internal_format>rgba32f</internal_format>
+        <source_format>rgba</source_format>
+        <source_type>float</source_type>
+    </buffer>
+    
+    <buffer name="aoScene" type="2d" width="1024" height="1024">
+        <internal_format>rgba32f</internal_format>
+        <source_format>rgba</source_format>
+        <source_type>float</source_type>
+    </buffer>
+    
+    <technique>
+        <forward_pass name="SSAO_OriginalScene">
+            <clear_color>0 0 0 1</clear_color>
+            <output_buffer target="color">originalScene</output_buffer>
+        </forward_pass>
+        
+        <forward_pass name="SSAO_LinearDepth">
+            <uniform>nearPlaneValue</uniform>
+            <uniform>farPlaneValue</uniform>
+            <output_buffer target="color">linearDepth</output_buffer>
+            <shader>getdepth_vs</shader>
+            <shader>getdepth_ps</shader>
+        </forward_pass>
+        
+        <deferred_pass name="SSAO_Processing">
+            <uniform>nearPlaneValue</uniform>
+            <uniform>farPlaneValue</uniform>
+            <uniform>viewportWidth</uniform>
+            <uniform>viewportHeight</uniform>
+            <uniform>contrast</uniform>
+            <input_buffer unit="0" varname="depthTex">linearDepth</input_buffer>
+            <output_buffer target="color">aoScene</output_buffer>
+            <shader>ssao_vs</shader>
+            <shader>ssao_process_ps</shader>
+        </deferred_pass>
+        
+        <deferred_pass name="SSAO_Combining">
+            <uniform>viewportWidth</uniform>
+            <uniform>viewportHeight</uniform>
+            <input_buffer unit="0" varname="sceneTex">originalScene</input_buffer>
+            <input_buffer unit="1" varname="aoTex">aoScene</input_buffer>
+            <shader>ssao_vs</shader>
+            <shader>ssao_combine_ps</shader>
+        </deferred_pass>
+    </technique>
+</compositor>

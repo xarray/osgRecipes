@@ -114,7 +114,7 @@ bool KinectHandler::handleJoints( NUI_SKELETON_DATA& skeletonData )
 
 bool KinectHandler::handleImages( NUI_IMAGE_FRAME& imageFrame )
 {
-    INuiFrameTexture * nuiTexture = imageFrame.pFrameTexture;
+    INuiFrameTexture* nuiTexture = imageFrame.pFrameTexture;
     NUI_LOCKED_RECT lockedRect;
     nuiTexture->LockRect( 0, &lockedRect, NULL, 0 );
     if ( lockedRect.Pitch!=NULL )

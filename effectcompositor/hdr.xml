@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<compositor>
+    <shader name="standard_vs" type="vertex">
+        <source>
+        <![CDATA[
+        void main(void)
+        {
+           gl_Position = ftransform();
+           gl_TexCoord[0] = gl_MultiTexCoord0;
+        }
+        ]]>
+        </source>
+    </shader>
+    
+    <shader name="extract_ps" type="fragment">
+        <source>
+        <![CDATA[
+        uniform sampler2D sceneTex;
+        uniform float brightThreshold;
+        
+        void main(void)
+        {
+           vec2 uv = gl_TexCoord[0].st;
+           vec4 color = texture2D(sceneTex, uv);
+           float lum = dot(vec4(0.30, 0.59, 0.11, 0.0), color);
+           if (lum < brightThreshold) gl_FragColor = vec4(0.0);
+           else gl_FragColor = color;
+        }
+        ]]>
+        </source>
+    </shader>
+    
+    <shader name="blur_ps" type="fragment">
+        <source>
+        <![CDATA[
+        uniform sampler2D sceneTex;
+        uniform vec2 blurOffset;
+        
+        void main(void)
+        {
+           vec2 uv = gl_TexCoord[0].st;
+           vec4 color = texture2D(sceneTex, uv) * 0.3;
+           color += texture2D(sceneTex, uv - blurOffset*3.0) * 0.05;
+           color += texture2D(sceneTex, uv - blurOffset*2.0) * 0.1;
+           color += texture2D(sceneTex, uv - blurOffset) * 0.2;
+           color += texture2D(sceneTex, uv + blurOffset) * 0.2;
+           color += texture2D(sceneTex, uv + blurOffset*2.0) * 0.1;
+           color += texture2D(sceneTex, uv + blurOffset*3.0) * 0.05;
+           gl_FragColor = color;
+        }
+        ]]>
+        </source>
+    </shader>
+    
+    <shader name="tonemapping_ps" type="fragment">
+        <source>
+        <![CDATA[
+        uniform sampler2D sceneTex;
+        uniform sampler2D blurredTex;
+        uniform float blurFactor;
+        uniform float radialAmount;
+        uniform float exposure;
+        const float gamma = 0.5;
+        
+        vec4 calculateRadial(vec2 uv, int samples, float startScale, float scaleMul)
+        {
+            vec4 tempColor = vec4(0.0);
+            vec2 tempTexCoord = vec2(0.0);
+            float currentScale = startScale;
+            
+            for (int i=0; i<samples; ++i)
+            {
+                tempTexCoord = (uv - 0.5) * currentScale + 0.5;
+                tempColor += texture2D(blurredTex, tempTexCoord);
+                currentScale *= scaleMul;
+            }
+            tempColor /= float(samples);
+            return tempColor;
+        }
+        
+        float calculateVignette(vec2 position, float inner, float outer)
+        { return 1.0 - smoothstep(inner, outer, length(position)); }
+        
+        void main()
+        {
+            vec2 uv = gl_TexCoord[0].st;
+            vec4 sceneColor = texture2D(sceneTex, uv);
+            vec4 blurredColor = texture2D(blurredTex, uv) * exposure;
+            vec4 radialColor = calculateRadial(uv, 20, 1.0, 0.9);
+            
+            vec4 tempColor = mix(sceneColor, blurredColor, blurFactor);
+            tempColor += radialColor * radialAmount;
+            tempColor *= calculateVignette(uv*2.0 - 1.0, 0.7, 1.5);
+            tempColor.rgb = pow(tempColor.rgb, vec3(gamma));
+            gl_FragColor = tempColor;
+        }
+        ]]>
+        </source>
+    </shader>
+    
+    <uniform name="brightThreshold" type="float">
+        <value>0.8</value>
+    </uniform>
+    
+    <uniform name="blurFactor" type="float">
+        <value>0.5</value>
+    </uniform>
+    
+    <uniform name="radialAmount" type="float">
+        <value>0.2</value>
+    </uniform>
+    
+    <uniform name="exposure" type="float">
+        <value>4.0</value>
+    </uniform>
+    
+    <buffer_template name="sceneBufferTemplate" type="2d">
+        <internal_format>rgba</internal_format>
+        <source_format>rgba</source_format>
+        <source_type>ubyte</source_type>
+    </buffer_template>
+    
+    <buffer name="originalScene" width="1024" height="1024" template="sceneBufferTemplate" />
+    <buffer name="extractedScene" width="1024" height="1024" template="sceneBufferTemplate" />
+    <buffer name="downsamplingScene1" width="512" height="512" template="sceneBufferTemplate" />
+    <buffer name="downsamplingScene2" width="256" height="256" template="sceneBufferTemplate" />
+    <buffer name="blurredScene1" width="256" height="256" template="sceneBufferTemplate" />
+    <buffer name="blurredScene2" width="256" height="256" template="sceneBufferTemplate" />
+    
+    <technique>
+        <forward_pass name="HDR_OriginalScene">
+            <clear_color>0 0 0 1</clear_color>
+            <output_buffer target="color">originalScene</output_buffer>
+        </forward_pass>
+        
+        <deferred_pass name="HDR_Extract">
+            <uniform>brightThreshold</uniform>
+            <input_buffer unit="0">originalScene</input_buffer>
+            <output_buffer target="color">extractedScene</output_buffer>
+            <shader>standard_vs</shader>
+            <shader>extract_ps</shader>
+        </deferred_pass>
+        
+        <deferred_pass name="HDR_Downsampling1">
+            <input_buffer unit="0">extractedScene</input_buffer>
+            <output_buffer target="color">downsamplingScene1</output_buffer>
+        </deferred_pass>
+        
+        <deferred_pass name="HDR_Downsampling2">
+            <input_buffer unit="0">downsamplingScene1</input_buffer>
+            <output_buffer target="color">downsamplingScene2</output_buffer>
+        </deferred_pass>
+        
+        <deferred_pass name="HDR_Blur1">
+            <uniform name="blurOffset" type="vec2"><value>0.004 0</value></uniform>
+            <input_buffer unit="0" varname="sceneTex">downsamplingScene2</input_buffer>
+            <output_buffer target="color">blurredScene1</output_buffer>
+            <shader>standard_vs</shader>
+            <shader>blur_ps</shader>
+        </deferred_pass>
+        
+        <deferred_pass name="HDR_Blur2">
+            <uniform name="blurOffset" type="vec2"><value>0 0.004</value></uniform>
+            <input_buffer unit="0" varname="sceneTex">blurredScene1</input_buffer>
+            <output_buffer target="color">blurredScene2</output_buffer>
+            <shader>standard_vs</shader>
+            <shader>blur_ps</shader>
+        </deferred_pass>
+        
+        <deferred_pass name="HDR_ToneMapping">
+            <uniform>blurFactor</uniform>
+            <uniform>radialAmount</uniform>
+            <uniform>exposure</uniform>
+            <input_buffer unit="0" varname="sceneTex">originalScene</input_buffer>
+            <input_buffer unit="1" varname="blurredTex">blurredScene2</input_buffer>
+            <shader>standard_vs</shader>
+            <shader>tonemapping_ps</shader>
+        </deferred_pass>
+    </technique>
+</compositor>

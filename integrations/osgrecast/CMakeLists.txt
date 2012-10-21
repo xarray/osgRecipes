@@ -1,0 +1,35 @@
+SET(RECAST_SOURCE_FILES
+    Recast/DebugDraw.cpp
+    Recast/DetourDebugDraw.cpp
+    Recast/RecastDebugDraw.cpp
+    Recast/RecastDump.cpp
+    Recast/DetourAlloc.cpp
+    Recast/DetourCommon.cpp
+    Recast/DetourNavMesh.cpp
+    Recast/DetourNavMeshBuilder.cpp
+    Recast/DetourNavMeshQuery.cpp
+    Recast/DetourNode.cpp
+    Recast/DetourPathCorridor.cpp
+    Recast/DetourLocalBoundary.cpp
+    Recast/DetourObstacleAvoidance.cpp
+    Recast/DetourPathQueue.cpp
+    Recast/DetourCrowd.cpp
+    Recast/DetourProximityGrid.cpp
+    Recast/DetourTileCache.cpp
+    Recast/DetourTileCacheBuilder.cpp
+    Recast/Recast.cpp
+    Recast/RecastArea.cpp
+    Recast/RecastAlloc.cpp
+    Recast/RecastContour.cpp
+    Recast/RecastFilter.cpp
+    Recast/RecastLayers.cpp
+    Recast/RecastMesh.cpp
+    Recast/RecastMeshDetail.cpp
+    Recast/RecastRasterization.cpp
+    Recast/RecastRegion.cpp
+)
+
+SET(EXTERNAL_INCLUDE_DIR oscpack TUIO)
+SET(EXAMPLE_NAME osgrecast)
+SET(EXAMPLE_FILES osgrecast.cpp ${RECAST_SOURCE_FILES})
+START_EXAMPLE()

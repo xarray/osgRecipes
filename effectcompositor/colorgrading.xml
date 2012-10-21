@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<compositor>
+    <shader name="color_grading_vs" type="vertex">
+        <source>
+        <![CDATA[
+        void main(void)
+        {
+           gl_Position = ftransform();
+           gl_TexCoord[0] = gl_MultiTexCoord0;
+        }
+        ]]>
+        </source>
+    </shader>
+    
+    <shader name="color_grading_ps" type="fragment">
+        <source>
+        <![CDATA[
+        uniform sampler2D sceneTex;
+        /*uniform sampler1D redCurveTex;
+        uniform sampler1D greenCurveTex;
+        uniform sampler1D blueCurveTex;*/
+        uniform vec3 colorAttribute;     // Brightness/Saturation/Contrast
+        uniform vec3 colorBalance;       // Cyan-Red/Magenta-Green/Yellow-Blue
+        uniform int balanceMode;
+        uniform float vignetteRadius;
+        uniform float vignetteDarkness;
+        uniform float gamma;
+        
+        // Color balance copied from gimp/app/base/color-balance.c
+        float oneColorBalanceFunc(float v, float factor, int mode)
+        {
+            if (factor == 0.0) return v;
+            else if (mode == 0)
+            {
+                float lowValue = 1.075 - 1.0 / ((factor>0.0 ? v : 1.0 - v) * 16.0 + 1.0);
+                return clamp(v + factor*lowValue, 0.0, 1.0);
+            }
+            else if (mode == 1)
+            {
+                float midValue = 0.667 * (1.0 - pow((v - 0.5) * 2.0, 2.0));
+                return clamp(v + factor*midValue, 0.0, 1.0);
+            }
+            else if (mode == 2)
+            {
+                float lowValue = 1.075 - 1.0 / ((factor>0.0 ? 1.0 - v : v) * 16.0 + 1.0);
+                return clamp(v + factor*lowValue, 0.0, 1.0);
+            }
+        }
+        
+        vec3 colorBalanceFunc(vec3 color, float cyan_red, float magenta_green, float yellow_blue, int mode)
+        {
+            return vec3(oneColorBalanceFunc(color.r, cyan_red, mode),
+                        oneColorBalanceFunc(color.g, magenta_green, mode),
+                        oneColorBalanceFunc(color.b, yellow_blue, mode));
+        }
+        
+        // Brightness, saturation, and contrast
+        vec3 colorAdjustmentFunc(vec3 color, float brt, float sat, float con)
+        {
+        	// Increase or decrease theese values to adjust r, g and b color channels seperately
+        	const float avgLumR = 0.5;
+        	const float avgLumG = 0.5;
+        	const float avgLumB = 0.5;
+        	const vec3 lumCoeff = vec3(0.2125, 0.7154, 0.0721);
+        	
+        	vec3 avgLumin = vec3(avgLumR, avgLumG, avgLumB);
+        	vec3 brtColor = color * brt;
+        	vec3 intensity = vec3(dot(brtColor, lumCoeff));
+        	vec3 satColor = mix(intensity, brtColor, sat);
+        	vec3 conColor = mix(avgLumin, satColor, con);
+        	return conColor;
+        }
+        
+        // Color curve
+        /*vec3 colorCurveFunc(vec3 color)
+        {
+            return vec3(texture1D(redCurveTex, color.r).r,
+                        texture1D(greenCurveTex, color.g).r,
+                        texture1D(blueCurveTex, color.b).r);
+        }*/
+        
+        // Vignette effect
+        vec3 vignetteEffectFunc(vec3 color, vec2 uv)
+        {
+            float vignette = 1.0 - dot(uv, uv);
+            return color.rgb * clamp(pow(vignette, vignetteRadius) - vignetteDarkness, 0.0, 1.0);
+        }
+        
+        // Gamma correction
+        #define gammaCorrectionFunc(color, g) pow(color, vec3(1.0/g))
+        
+        void main(void)
+        {
+           vec2 uv = gl_TexCoord[0].st;
+           vec4 color = texture2D(sceneTex, uv);
+           vec3 colorRGB = color.rgb;
+           colorRGB = colorBalanceFunc(colorRGB, colorBalance.x, colorBalance.y, colorBalance.z, balanceMode);
+           colorRGB = colorAdjustmentFunc(colorRGB, colorAttribute.x, colorAttribute.y, colorAttribute.z);
+           //colorRGB = colorCurveFunc(colorRGB);
+           colorRGB = vignetteEffectFunc(colorRGB, uv - vec2(0.5, 0.5));
+           colorRGB = gammaCorrectionFunc(colorRGB, gamma);
+           gl_FragColor = vec4(colorRGB, color.a);
+        }
+        ]]>
+        </source>
+    </shader>
+    
+    <uniform name="colorAttribute" type="vec3">
+        <value>1.0 1.0 1.0</value>  <!-- 1.0 = 100%, 0.5 = 50%, 1.5 = 150% -->
+        <animation duration="4.0" loop="1">
+            <keyframe time="0.0">1.0 1.0 1.0</keyframe>
+            <keyframe time="2.0">2.0 1.0 2.0</keyframe>
+            <keyframe time="4.0">1.0 1.0 1.0</keyframe>
+        </animation>
+    </uniform>
+    
+    <uniform name="colorBalance" type="vec3">
+        <value>0.0 0.0 0.0</value>  <!-- 0.0 = default, 1.0 = positive max, -1.0 = negative max -->
+    </uniform>
+    
+    <uniform name="balanceMode" type="int">
+        <value>0</value>  <!-- 0 - shadow, 1 - midtone, 2 - highlight -->
+    </uniform>
+    
+    <uniform name="vignetteRadius" type="float">
+        <value>4.0</value>
+    </uniform>
+    
+    <uniform name="vignetteDarkness" type="float">
+        <value>0.0</value>
+    </uniform>
+    
+    <uniform name="gamma" type="float">
+        <value>1.0</value>
+    </uniform>
+    
+    <buffer name="sceneData" type="2d" width="1024" height="1024">
+        <internal_format>rgba</internal_format>
+        <source_format>rgba</source_format>
+        <source_type>ubyte</source_type>
+    </buffer>
+    
+    <technique>
+        <forward_pass name="ColorGrading_OriginalScene">
+            <clear_color>0 0 0 1</clear_color>
+            <output_buffer target="color">sceneData</output_buffer>
+        </forward_pass>
+        
+        <deferred_pass name="ColorGrading_Final">
+            <uniform>colorAttribute</uniform>
+            <uniform>colorBalance</uniform>
+            <uniform>balanceMode</uniform>
+            <uniform>vignetteRadius</uniform>
+            <uniform>vignetteDarkness</uniform>
+            <uniform>gamma</uniform>
+            <input_buffer unit="0" varname="sceneTex">sceneData</input_buffer>
+            <shader>color_grading_vs</shader>
+            <shader>color_grading_ps</shader>
+        </deferred_pass>
+    </technique>
+</compositor>

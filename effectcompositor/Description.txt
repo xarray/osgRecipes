@@ -1,0 +1,75 @@
+<include>
+
+<template>/<technique_template>/<pass_template>/<buffer_template>/<texture_template>/<uniform_template>/<shader_template>
+    name
+
+<technique>
+    name
+    template
+
+<pass>/<forward_pass>/<deferred_pass>
+    name
+    type
+    template
+    <shader>
+    <uniform>
+    <texture>/<input_buffer>
+        unit
+    <output_buffer>
+        target
+        level
+        face
+        use_mipmap
+        samples
+        color_samples
+    <clear_color>
+    <render_config>*
+        order
+        target_method
+    <vertex_attribute>*
+        name
+        index
+    <culling>*
+        mask
+    <near_far>*
+        computation
+        ratio
+
+<buffer>/<texture>
+    name
+    type
+    width
+    height
+    depth
+    samples
+    resize_npot
+    template
+    <file>
+        index
+        animated
+    <wrap>
+        param
+    <filter>
+        param
+    <internal_format>
+        compression
+    <source_format>
+    <source_type>
+    
+<uniform>
+    name
+    type
+    template
+    <value>/<inbuilt_value>
+    <animation>
+        duration
+        loop
+        <keyframe>
+            time
+
+<shader>
+    name
+    type
+    template
+    <source>
+    <file>

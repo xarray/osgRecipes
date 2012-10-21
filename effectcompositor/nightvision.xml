@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<compositor>
+    <shader name="nightvision_vs" type="vertex">
+        <source>
+        <![CDATA[
+        void main(void)
+        {
+           gl_Position = ftransform();
+           gl_TexCoord[0] = gl_MultiTexCoord0;
+        }
+        ]]>
+        </source>
+    </shader>
+    
+    <shader name="nightvision_ps" type="fragment">
+        <source>
+        <![CDATA[
+        uniform sampler2D sceneTex;
+        uniform sampler2D noiseTex;
+        uniform float brightness;
+        uniform float osg_FrameTime;
+        
+        void main(void)
+        {
+           float factor = osg_FrameTime * 100.0;
+           vec2 uv = vec2(0.4*sin(factor), 0.4*cos(factor));
+           vec3 n = texture2D(noiseTex, (gl_TexCoord[0].st*3.5) + uv).rgb;
+           vec3 c = texture2D(sceneTex, gl_TexCoord[0].st + (n.xy*0.005)).rgb;
+           float lum = dot(vec3(0.30, 0.59, 0.11), c);
+           if (lum < 0.2) c *= brightness;
+           
+           vec3 finalColor = (c + (n*0.2)) * vec3(0.1, 0.95, 0.2);
+           gl_FragColor = vec4(finalColor, 1.0);
+        }
+        ]]>
+        </source>
+    </shader>
+    
+    <uniform name="brightness" type="float">
+        <value>4.0</value>
+        <animation duration="5.0" loop="1">
+            <keyframe time="0.0">0.0</keyframe>
+            <keyframe time="2.5">10.0</keyframe>
+            <keyframe time="5.0">0.0</keyframe>
+        </animation>
+    </uniform>
+    
+    <buffer name="sceneData" type="2d" width="512" height="512">
+        <internal_format>rgba</internal_format>
+        <source_format>rgba</source_format>
+        <source_type>ubyte</source_type>
+    </buffer>
+    
+    <texture name="noiseTexFile" type="2d">
+        <file>noise_tex.jpg</file>
+        <wrap param="s">repeat</wrap>
+        <wrap param="t">repeat</wrap>
+    </texture>
+    
+    <technique>
+        <forward_pass name="NightVision_OriginalScene">
+            <clear_color>0 0 0 1</clear_color>
+            <output_buffer target="color">sceneData</output_buffer>
+        </forward_pass>
+        
+        <deferred_pass name="NightVision_Final">
+            <input_buffer unit="0" varname="sceneTex">sceneData</input_buffer>
+            <texture unit="1" varname="noiseTex">noiseTexFile</texture>
+            <uniform>brightness</uniform>
+            <shader>nightvision_vs</shader>
+            <shader>nightvision_ps</shader>
+        </deferred_pass>
+    </technique>
+</compositor>
