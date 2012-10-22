@@ -1,11 +1,15 @@
 #include <osg/io_utils>
 #include <osg/Depth>
+#include <osg/LightModel>
+#include <osg/LightSource>
 #include <osg/Geode>
 #include <osg/MatrixTransform>
 #include <osgDB/FileNameUtils>
 #include <osgDB/ReadFile>
 #include <osgGA/StateSetManipulator>
 #include <osgUtil/CullVisitor>
+#include <osgShadow/ShadowedScene>
+#include <osgShadow/ViewDependentShadowMap>
 #include <osgViewer/ViewerEventHandlers>
 #include <osgViewer/Viewer>
 #include <iostream>
@@ -23,6 +27,36 @@ class SilverLiningNode : public osg::Geode
             _silverLining->initializeSilverLining( renderInfo );
             _silverLining->atmosphere()->DrawSky( true, false, 0.0, true, false );
             renderInfo.getState()->dirtyAllVertexArrays();
+        }
+        
+        virtual osg::BoundingBox computeBound() const
+        {
+            osg::BoundingBox skyBoundBox;
+            if ( !_silverLining->isAtmosphereValid() ) return skyBoundBox;
+            
+            SilverLining::Atmosphere* atmosphere = _silverLining->atmosphere();
+            double skyboxSize = atmosphere->GetConfigOptionDouble("sky-box-size");
+            if ( skyboxSize==0.0 ) skyboxSize = 1000.0;
+            
+            osg::Vec3d radiusVec = osg::Vec3d(skyboxSize, skyboxSize, skyboxSize) * 0.5;
+            const osg::Vec3d& camPos = _silverLining->getCameraPosition();
+            skyBoundBox.set( camPos-radiusVec, camPos+radiusVec );
+            
+            bool hasLimb = atmosphere->GetConfigOptionBoolean("enable-atmosphere-from-space");
+            if ( hasLimb )
+            {
+                // Compute bounds of atmospheric limb centered at (0,0,0)
+                double earthRadius = atmosphere->GetConfigOptionDouble("earth-radius-meters");
+                double atmosphereHeight = earthRadius + atmosphere->GetConfigOptionDouble("atmosphere-height");
+                double atmosphereThickness = atmosphere->GetConfigOptionDouble("atmosphere-scale-height-meters") + earthRadius;
+                
+                osg::BoundingBox atmosphereBox;
+                osg::Vec3d atmMin(-atmosphereThickness, -atmosphereThickness, -atmosphereThickness);
+                osg::Vec3d atmMax(atmosphereThickness, atmosphereThickness, atmosphereThickness);
+                atmosphereBox.set( atmMin, atmMax );
+                skyBoundBox.expandBy( atmosphereBox );
+            }
+            return skyBoundBox;
         }
         
         SkyDrawable( SilverLiningNode* s=NULL ) { _silverLining = s; }
@@ -43,6 +77,17 @@ class SilverLiningNode : public osg::Geode
             _silverLining->initializeSilverLining( renderInfo );
             _silverLining->atmosphere()->DrawObjects( true, true, true );
             renderInfo.getState()->dirtyAllVertexArrays();
+        }
+        
+        virtual osg::BoundingBox computeBound() const
+        {
+            osg::BoundingBox cloudBoundBox;
+            if ( !_silverLining->isAtmosphereValid() ) return cloudBoundBox;
+            
+            double minX, minY, minZ, maxX, maxY, maxZ;
+            _silverLining->atmosphere()->GetCloudBounds( minX, minY, minZ, maxX, maxY, maxZ );
+            cloudBoundBox.set( osg::Vec3d(minX, minY, minZ), osg::Vec3d(maxX, maxY, maxZ) );
+            return cloudBoundBox;
         }
         
         CloudDrawable( SilverLiningNode* s=NULL ) { _silverLining = s; }
@@ -68,7 +113,8 @@ class SilverLiningNode : public osg::Geode
                     {
                         silverLining->atmosphere()->UpdateSkyAndClouds();
                         silverLining->updateGlobalLight();
-                        silverLining->dirtyBound();
+                        silverLining->skyDrawable()->dirtyBound();
+                        silverLining->cloudDrawable()->dirtyBound();
                     }
                 }
                 else if ( nv->getVisitorType()==osg::NodeVisitor::CULL_VISITOR )
@@ -87,6 +133,12 @@ class SilverLiningNode : public osg::Geode
         }
     };
     
+    struct AlwaysKeepCallback : public osg::Drawable::CullCallback
+    {
+        virtual bool cull( osg::NodeVisitor* nv, osg::Drawable* drawable, osg::RenderInfo* renderInfo ) const
+        { return false; }
+    };
+    
 public:
     SilverLiningNode()
     :   _initialized(false)
@@ -103,6 +155,7 @@ public:
         _cloud->setUseVertexBufferObjects( false );
         _cloud->setUseDisplayList( false );
         _cloud->getOrCreateStateSet()->setRenderBinDetails( 99, "RenderBin" );
+        _cloud->setCullCallback( new AlwaysKeepCallback );  // This seems to avoid cloud to twinkle sometimes
         addDrawable( _cloud.get() );
         
         AtmosphereUpdater* updater = new AtmosphereUpdater;
@@ -110,7 +163,10 @@ public:
         setCullCallback( updater );
         setCullingActive( false );
         getOrCreateStateSet()->setRenderBinDetails( 100, "RenderBin" );
+        
         _atmosphere = new SilverLining::Atmosphere( "Your user name", "Your license code" );
+        _atmosphere->DisableFarCulling( true );
+        _atmosphere->EnableLensFlare( true );
         
         const char* slPath = getenv( "SILVERLINING_PATH" );
         if ( slPath )
@@ -125,6 +181,19 @@ public:
     
     META_Node( osg, SilverLiningNode )
     
+    osg::Drawable* skyDrawable() { return _sky.get(); }
+    const osg::Drawable* skyDrawable() const { return _sky.get(); }
+    osg::Drawable* cloudDrawable() { return _cloud.get(); }
+    const osg::Drawable* cloudDrawable() const { return _cloud.get(); }
+    
+    unsigned int getNumCloudLayers() const { return _managedCloudLayers.size(); }
+    SilverLining::CloudLayer* getCloudLayer( unsigned int id )
+    {
+        SilverLining::CloudLayer* layer = NULL;
+        _atmosphere->GetConditions()->GetCloudLayer( _managedCloudLayers[id], &layer );
+        return layer;
+    }
+    
     SilverLining::Atmosphere* atmosphere() { return _atmosphere; }
     const SilverLining::Atmosphere* atmosphere() const { return _atmosphere; }
     bool isAtmosphereValid() const { return _initialized; }
@@ -132,57 +201,12 @@ public:
     void setResourcePath( const std::string& path ) { _resourcePath = path; }
     const std::string& getResourcePath() const { return _resourcePath; }
     
-    void setAtmosphereLight( osg::Light* l ) { _light = l; }
-    osg::Light* getAtmosphereLight() { return _light.get(); }
-    const osg::Light* getAtmosphereLight() const { return _light.get(); }
+    void setGlobalLight( osg::Light* l ) { _light = l; }
+    osg::Light* getGlobalLight() { return _light.get(); }
+    const osg::Light* getGlobalLight() const { return _light.get(); }
     
     void setCameraPosition( const osg::Vec3d& pos ) { _cameraPos = pos; }
     const osg::Vec3d& getCameraPosition() const { return _cameraPos; }
-    
-    virtual osg::BoundingSphere computeBound() const
-    {
-        osg::BoundingSphere bs;
-        if ( !_initialized ) return bs;
-        
-        // Check sky bound box
-        osg::BoundingBox skyBoundBox;
-        {
-            double skyboxSize = _atmosphere->GetConfigOptionDouble("sky-box-size");
-            if ( skyboxSize==0.0 ) skyboxSize = 1000.0;
-            
-            osg::Vec3d radiusVec = osg::Vec3d(skyboxSize, skyboxSize, skyboxSize) * 0.5;
-            skyBoundBox.set( _cameraPos-radiusVec, _cameraPos+radiusVec );
-            
-            bool hasLimb = _atmosphere->GetConfigOptionBoolean("enable-atmosphere-from-space");
-            if ( hasLimb )
-            {
-                // Compute bounds of atmospheric limb centered at (0,0,0)
-                double earthRadius = _atmosphere->GetConfigOptionDouble("earth-radius-meters");
-                double atmosphereHeight = earthRadius + _atmosphere->GetConfigOptionDouble("atmosphere-height");
-                double atmosphereThickness = _atmosphere->GetConfigOptionDouble("atmosphere-scale-height-meters") + earthRadius;
-                
-                osg::BoundingBox atmosphereBox;
-                osg::Vec3d atmMin(-atmosphereThickness, -atmosphereThickness, -atmosphereThickness);
-                osg::Vec3d atmMax(atmosphereThickness, atmosphereThickness, atmosphereThickness);
-                atmosphereBox.set( atmMin, atmMax );
-                skyBoundBox.expandBy( atmosphereBox );
-            }
-            std::cout << "Sky: " << skyBoundBox.center() << ": " << skyBoundBox.radius() << std::endl;
-        }
-        
-        // Check cloud bound box
-        osg::BoundingBox cloudBoundBox;
-        {
-            double minX, minY, minZ, maxX, maxY, maxZ;
-            _atmosphere->GetCloudBounds( minX, minY, minZ, maxX, maxY, maxZ );
-            cloudBoundBox.set( osg::Vec3d(minX, minY, minZ), osg::Vec3d(maxX, maxY, maxZ) );
-            std::cout << "Cloud: " << cloudBoundBox.center() << ": " << cloudBoundBox.radius() << std::endl;
-        }
-        
-        bs.expandBy( skyBoundBox );
-        bs.expandBy( cloudBoundBox );
-        return bs;
-    }
     
     // Derive this method to create your atmosphere data at creation
     virtual void createAtmosphereData( osg::RenderInfo& renderInfo )
@@ -197,13 +221,13 @@ public:
         // Set the time to noon in PST
         SilverLining::LocalTime t;
         t.SetFromSystemTime();
-        t.SetHour( 12.0 );
+        t.SetHour( 15.0 );
         t.SetTimeZone( PST );
         _atmosphere->GetConditions()->SetTime( t );
         
         // Create cloud layers
-        SilverLining::CloudLayer* cumulusCongestusLayer;
-        cumulusCongestusLayer = SilverLining::CloudLayerFactory::Create(CUMULUS_CONGESTUS);
+        SilverLining::CloudLayer* cumulusCongestusLayer =
+            SilverLining::CloudLayerFactory::Create( CUMULUS_CONGESTUS/*CUMULONIMBUS_CAPPILATUS*/ );
         cumulusCongestusLayer->SetIsInfinite( true );
         cumulusCongestusLayer->SetBaseAltitude( 500 );
         cumulusCongestusLayer->SetThickness( 200 );
@@ -215,11 +239,10 @@ public:
         cumulusCongestusLayer->SetLayerPosition( _cameraPos.x(), -_cameraPos.y() );
         cumulusCongestusLayer->SeedClouds( *_atmosphere );
         cumulusCongestusLayer->GenerateShadowMaps( false );
-        _atmosphere->GetConditions()->AddCloudLayer( cumulusCongestusLayer );
+        _managedCloudLayers.push_back( _atmosphere->GetConditions()->AddCloudLayer(cumulusCongestusLayer) );
     }
     
-public:
-    bool initializeSilverLining( osg::RenderInfo& renderInfo )
+    virtual bool initializeSilverLining( osg::RenderInfo& renderInfo )
     {
         if ( _initialized ) return true;
         srand( 1234 ); // constant random seed to ensure consistent clouds across windows
@@ -239,7 +262,7 @@ public:
         return true;
     }
     
-    void updateGlobalLight()
+    virtual void updateGlobalLight()
     {
         if ( _initialized && _light.valid() )
         {
@@ -260,6 +283,7 @@ protected:
     virtual ~SilverLiningNode()
     { delete _atmosphere; }
     
+    std::vector<int> _managedCloudLayers;
     osg::observer_ptr<SkyDrawable> _sky;
     osg::observer_ptr<CloudDrawable> _cloud;
     osg::observer_ptr<osg::Light> _light;
@@ -269,21 +293,104 @@ protected:
     bool _initialized;
 };
 
+class SilverLiningTester : public osgGA::GUIEventHandler
+{
+public:
+    bool handle( const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa )
+    {
+        if ( ea.getEventType()==osgGA::GUIEventAdapter::KEYUP )
+        {
+            SilverLining::Atmosphere* atmosphere = _silverLining->atmosphere();
+            switch ( ea.getKey() )
+            {
+            case '0':  // clear
+                atmosphere->GetConditions()->SetPrecipitation( SilverLining::CloudLayer::NONE, 0 );
+                break;
+            case '1':  // rain
+                atmosphere->GetConditions()->SetPrecipitation( SilverLining::CloudLayer::RAIN, 10 );
+                break;
+            case '2':  // wet snow
+                atmosphere->GetConditions()->SetPrecipitation( SilverLining::CloudLayer::WET_SNOW, 10 );
+                break;
+            case '3':  // dry snow
+                atmosphere->GetConditions()->SetPrecipitation( SilverLining::CloudLayer::DRY_SNOW, 10 );
+                break;
+            case '4':  // sleet
+                atmosphere->GetConditions()->SetPrecipitation( SilverLining::CloudLayer::SLEET, 10 );
+                break;
+            case '5':  // Force a lightning
+                {
+                    // Note: you must use cloud of the type CUMULONIMBUS_CAPPILATUS to enable lightning
+                    SilverLining::CloudLayer* layer = _silverLining->getCloudLayer(0);
+                    if ( layer ) layer->ForceLightning();
+                }
+                break;
+            default: break;
+            }
+        }
+        return false;
+    }
+    
+    SilverLiningTester( SilverLiningNode* sn ) { _silverLining = sn; }
+    SilverLiningNode* _silverLining;
+};
+
+#define SHADOW_RECEIVE_MASK 0x1
+#define SHADOW_CAST_MASK 0x2
+osg::Group* createShadowedScene( osg::Node* scene, osg::LightSource* ls )
+{
+    osg::ref_ptr<osgShadow::ShadowSettings> settings = new osgShadow::ShadowSettings;
+    settings->setShadowMapTechniqueHints( osgShadow::ShadowSettings::PARALLEL_SPLIT|osgShadow::ShadowSettings::PERSPECTIVE );
+    settings->setShaderHint( osgShadow::ShadowSettings::PROVIDE_FRAGMENT_SHADER );
+	settings->setTextureSize( osg::Vec2s(2048, 2048) );
+    settings->setNumShadowMapsPerLight( 3 );
+    settings->setMaximumShadowMapNearFarDistance( 5000.0 );
+    
+    osg::ref_ptr<osgShadow::ShadowedScene> shadowedScene = new osgShadow::ShadowedScene;
+	shadowedScene->setReceivesShadowTraversalMask( SHADOW_RECEIVE_MASK );
+	shadowedScene->setCastsShadowTraversalMask( SHADOW_CAST_MASK );
+	shadowedScene->setShadowTechnique( new osgShadow::ViewDependentShadowMap );
+	shadowedScene->setShadowSettings( settings.get() );
+    shadowedScene->addChild( scene );
+    
+    osg::ref_ptr<osg::LightModel> lm = new osg::LightModel;
+    lm->setAmbientIntensity( osg::Vec4(0.55f, 0.6f, 0.71f, 1.0f) );
+    shadowedScene->getOrCreateStateSet()->setAttributeAndModes( lm.get() );
+    shadowedScene->addChild( ls );
+    return shadowedScene.release();
+}
+
 int main( int argc, char** argv )
 {
     osg::ArgumentParser arguments( &argc, argv );
     
+    bool shadowed = false;
+    if ( arguments.read("--shadowed") ) shadowed = true;
+    
     osg::Node* model = osgDB::readNodeFiles( arguments );
     if ( !model ) model = osgDB::readNodeFile( "lz.osg" );
     
+    osg::ref_ptr<osg::LightSource> ls = new osg::LightSource;
+    ls->getLight()->setLightNum( 0 );
+	ls->getLight()->setPosition( osg::Vec4(0.5f, 0.5f, 0.5f, 0.0f) );
+	ls->getLight()->setAmbient( osg::Vec4(0.2f, 0.2f, 0.2f, 1.0f) );
+	ls->getLight()->setDiffuse( osg::Vec4(0.49f, 0.465f, 0.494f, 1.0f) );
+    ls->getLight()->setSpecular( osg::Vec4(1.0f, 0.98f, 0.95f, 1.0f) );
+    
     osg::ref_ptr<SilverLiningNode> silverLining = new SilverLiningNode;
+    silverLining->setGlobalLight( ls->getLight() );
     
     osg::ref_ptr<osg::MatrixTransform> scene = new osg::MatrixTransform;
-    scene->addChild( model );
+    scene->addChild( shadowed ? createShadowedScene(model, ls.get()) : model );
     scene->addChild( silverLining.get() );
     
     osgViewer::Viewer viewer;
-    viewer.getCamera()->setComputeNearFarMode( osg::Camera::DO_NOT_COMPUTE_NEAR_FAR );  // FIXME: want auto compute
+#if 0
+    // FIXME: In fact it performs better with fixed near/far at present.
+    // The sky/cloud may flicker if we move the camera quickly, don't know the reason till now...
+    viewer.getCamera()->setComputeNearFarMode( osg::Camera::DO_NOT_COMPUTE_NEAR_FAR );
+#endif
+    viewer.addEventHandler( new SilverLiningTester(silverLining.get()) );
     viewer.addEventHandler( new osgGA::StateSetManipulator(viewer.getCamera()->getOrCreateStateSet()) );
     viewer.addEventHandler( new osgViewer::StatsHandler );
     viewer.addEventHandler( new osgViewer::WindowSizeHandler );
