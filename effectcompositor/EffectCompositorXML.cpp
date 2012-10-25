@@ -29,14 +29,14 @@ struct UniformAnimator : public osg::Uniform::Callback
             time = startTime + fraction_part * duration;
         }
         
-        std::map<double, T>::const_iterator itr = keyframes.lower_bound(time);
+        typename std::map<double, T>::const_iterator itr = keyframes.lower_bound(time);
         if ( itr==keyframes.begin() )
             uniform->set( itr->second );
         else if ( itr==keyframes.end() )
             uniform->set( keyframes.rbegin()->second );
         else
         {
-            std::map<double, T>::const_iterator itr0 = itr; --itr0;
+            typename std::map<double, T>::const_iterator itr0 = itr; --itr0;
             double delta_time = itr->first - itr0->first;
             if ( delta_time==0.0 )
                 uniform->set( itr0->second );
@@ -56,6 +56,19 @@ struct UniformAnimator : public osg::Uniform::Callback
     double duration;
     bool loop;
 };
+
+static bool isXMLNodeType( osgDB::XmlNode* xmlNode )
+{
+    switch ( xmlNode->type )
+    {
+    case osgDB::XmlNode::ATOM:
+    case osgDB::XmlNode::NODE:
+    case osgDB::XmlNode::GROUP:
+        return true;
+    default:
+        return false;
+    }
+}
 
 template<typename T>
 static UniformAnimator<T>* createAnimatorFromXML( osgDB::XmlNode* xmlNode )
@@ -77,19 +90,6 @@ static UniformAnimator<T>* createAnimatorFromXML( osgDB::XmlNode* xmlNode )
         animator->keyframes[time] = value;
     }
     return animator.release();
-}
-
-static bool isXMLNodeType( osgDB::XmlNode* xmlNode )
-{
-    switch ( xmlNode->type )
-    {
-    case osgDB::XmlNode::ATOM:
-    case osgDB::XmlNode::NODE:
-    case osgDB::XmlNode::GROUP:
-        return true;
-    default:
-        return false;
-    }
 }
 
 static void inheritXmlNode( osgDB::XmlNode* target, osgDB::XmlNode* source )

@@ -81,7 +81,7 @@ bool EffectCompositor::PassData::resetAsDisplayPass()
 /* EffectCompositor */
 
 EffectCompositor::EffectCompositor()
-:   _preservedZNear(FLT_MAX), _preservedZFar(FLT_MAX)
+:   _renderTargetImpl(osg::Camera::FRAME_BUFFER_OBJECT), _preservedZNear(FLT_MAX), _preservedZFar(FLT_MAX)
 {
     getOrCreateQuad();
     setCurrentTechnique( "default" );
@@ -94,6 +94,7 @@ EffectCompositor::EffectCompositor( const EffectCompositor& copy, const osg::Cop
     _uniformMap(copy._uniformMap), _shaderMap(copy._shaderMap),
     _inbuiltUniforms(copy._inbuiltUniforms),
     _currentTechnique(copy._currentTechnique), _quad(copy._quad),
+    _renderTargetImpl(copy._renderTargetImpl),
     _preservedZNear(copy._preservedZNear),
     _preservedZFar(copy._preservedZFar)
 {
@@ -104,7 +105,7 @@ osg::Camera* EffectCompositor::createNewPass( PassType type, const std::string& 
     osg::ref_ptr<osg::Camera> camera = new osg::Camera;
     camera->setClearMask( GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT );
     camera->setRenderOrder( osg::Camera::PRE_RENDER );
-    camera->setRenderTargetImplementation( osg::Camera::FRAME_BUFFER_OBJECT );
+    camera->setRenderTargetImplementation( _renderTargetImpl );
     camera->setCullCallback( new PassCullCallback(this, type) );
     if ( type==DEFERRED_PASS )
     {
@@ -462,6 +463,7 @@ void EffectCompositor::traverse( osg::NodeVisitor& nv )
                 case FRUSTUM_FAR_PLANE:
                     itr->second->set( (float)zFar );
                     break;
+                default: break;
                 }
             }
         }

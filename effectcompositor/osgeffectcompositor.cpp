@@ -21,99 +21,64 @@
 extern void configureViewerForMode( osgViewer::Viewer& viewer, osgFX::EffectCompositor* compositor,
                                     osg::Node* model, int displayMode );
 
-/* The skybox */
+#ifdef HAVE_SILVERLINING
 
-struct TexMatCallback : public osg::NodeCallback
+/* The SilverLining skybox */
+#include "SilverLiningNode.h"
+
+class MySilverLiningNode : public SilverLiningNode
 {
 public:
-    osg::TexMat& _texMat;
-    TexMatCallback( osg::TexMat& tm ) : _texMat(tm) {}
+    MySilverLiningNode( const char* licenseUser, const char* licenseKey )
+    : SilverLiningNode(licenseUser, licenseKey) {}
     
-    virtual void operator()( osg::Node* node, osg::NodeVisitor* nv )
+    virtual void createAtmosphereData( osg::RenderInfo& renderInfo )
     {
-        osgUtil::CullVisitor* cv = dynamic_cast<osgUtil::CullVisitor*>(nv);
-        if ( cv )
-        {
-            const osg::Matrix& MV = *(cv->getModelViewMatrix());
-            const osg::Matrix R = osg::Matrix::rotate(osg::DegreesToRadians(112.0f), 0.0f, 0.0f, 1.0f) *
-                                  osg::Matrix::rotate(osg::DegreesToRadians(90.0f), 1.0f, 0.0f, 0.0f);
-            const osg::Matrix C = osg::Matrix::rotate( MV.getRotate().inverse() );
-            _texMat.setMatrix( C*R );
-        }
-        traverse(node,nv);
+        // Set our location (change this to your own latitude and longitude)
+        SilverLining::Location loc;
+        loc.SetAltitude( 0.0 );
+        loc.SetLatitude( 45.0 );
+        loc.SetLongitude( -122.0 );
+        _atmosphere->GetConditions()->SetLocation( loc );
+        
+        // Set the time to noon in PST
+        SilverLining::LocalTime t;
+        t.SetFromSystemTime();
+        t.SetHour( 15.0 );
+        t.SetTimeZone( PST );
+        _atmosphere->GetConditions()->SetTime( t );
+        
+        // Create cloud layers
+        SilverLining::CloudLayer* cumulusCongestusLayer =
+            SilverLining::CloudLayerFactory::Create( CUMULUS_CONGESTUS );
+        cumulusCongestusLayer->SetIsInfinite( true );
+        cumulusCongestusLayer->SetBaseAltitude( 500 );
+        cumulusCongestusLayer->SetThickness( 200 );
+        cumulusCongestusLayer->SetBaseLength( 40000 );
+        cumulusCongestusLayer->SetBaseWidth( 40000 );
+        cumulusCongestusLayer->SetDensity( 0.3 );
+        
+        // Note, we pass in X and -Y since this accepts "east" and "south" coordinates.
+        cumulusCongestusLayer->SetLayerPosition( _cameraPos.x(), -_cameraPos.y() );
+        cumulusCongestusLayer->SeedClouds( *_atmosphere );
+        cumulusCongestusLayer->GenerateShadowMaps( false );
+        atmosphere()->GetConditions()->AddCloudLayer( cumulusCongestusLayer );
     }
 };
 
-class MoveEarthySkyWithEyePointTransform : public osg::Transform
-{
-public:
-    virtual bool computeLocalToWorldMatrix( osg::Matrix& matrix, osg::NodeVisitor* nv ) const 
-    {
-        osgUtil::CullVisitor* cv = dynamic_cast<osgUtil::CullVisitor*>(nv);
-        if ( cv )
-        {
-            osg::Vec3 eyePointLocal = cv->getEyeLocal();
-            matrix.preMultTranslate( eyePointLocal );
-        }
-        return true;
-    }
-    
-    virtual bool computeWorldToLocalMatrix( osg::Matrix& matrix, osg::NodeVisitor* nv ) const
-    {
-        osgUtil::CullVisitor* cv = dynamic_cast<osgUtil::CullVisitor*>(nv);
-        if ( cv )
-        {
-            osg::Vec3 eyePointLocal = cv->getEyeLocal();
-            matrix.postMultTranslate( -eyePointLocal );
-        }
-        return true;
-    }
-};
-
-#define CUBEMAP_FILENAME(face) "Cubemap_snow/" #face ".jpg"
 osg::Node* createSkyBox()
 {
-    osg::ref_ptr<osg::Geode> geode = new osg::Geode;
-    geode->addDrawable( new osg::ShapeDrawable(new osg::Sphere(osg::Vec3(), 1.0f)) );
-    geode->setCullingActive( false );
-    
-    osg::StateSet* ss = geode->getOrCreateStateSet();
-    ss->setRenderBinDetails( -1,"RenderBin" );
-    ss->setMode( GL_LIGHTING, osg::StateAttribute::OFF );
-    ss->setMode( GL_CULL_FACE, osg::StateAttribute::OFF );
-    ss->setAttributeAndModes( new osg::Depth(osg::Depth::ALWAYS, 1.0, 1.0) );
-    ss->setTextureAttributeAndModes( 0, new osg::TexEnv(osg::TexEnv::REPLACE) );
-    
-    osg::ref_ptr<osg::TexGen> tg = new osg::TexGen;
-    tg->setMode( osg::TexGen::NORMAL_MAP );
-    ss->setTextureAttributeAndModes( 0, tg.get() );
-    
-    osg::ref_ptr<osg::TexMat> tm = new osg::TexMat;
-    ss->setTextureAttribute( 0, tm.get() );
-    
-    osg::ref_ptr<osg::TextureCubeMap> cubemap = new osg::TextureCubeMap;
-    cubemap->setImage( osg::TextureCubeMap::POSITIVE_X, osgDB::readImageFile(CUBEMAP_FILENAME(posx)) );
-    cubemap->setImage( osg::TextureCubeMap::NEGATIVE_X, osgDB::readImageFile(CUBEMAP_FILENAME(negx)) );
-    cubemap->setImage( osg::TextureCubeMap::POSITIVE_Y, osgDB::readImageFile(CUBEMAP_FILENAME(posy)) );
-    cubemap->setImage( osg::TextureCubeMap::NEGATIVE_Y, osgDB::readImageFile(CUBEMAP_FILENAME(negy)) );
-    cubemap->setImage( osg::TextureCubeMap::POSITIVE_Z, osgDB::readImageFile(CUBEMAP_FILENAME(posz)) );
-    cubemap->setImage( osg::TextureCubeMap::NEGATIVE_Z, osgDB::readImageFile(CUBEMAP_FILENAME(negz)) );
-    cubemap->setWrap( osg::Texture::WRAP_S, osg::Texture::CLAMP_TO_EDGE );
-    cubemap->setWrap( osg::Texture::WRAP_T, osg::Texture::CLAMP_TO_EDGE );
-    cubemap->setWrap( osg::Texture::WRAP_R, osg::Texture::CLAMP_TO_EDGE );
-    cubemap->setFilter( osg::Texture::MIN_FILTER, osg::Texture::LINEAR_MIPMAP_LINEAR );
-    cubemap->setFilter( osg::Texture::MAG_FILTER, osg::Texture::LINEAR );
-    ss->setTextureAttributeAndModes( 0, cubemap.get() );
-    
-    osg::ref_ptr<osg::Transform> transform = new MoveEarthySkyWithEyePointTransform;
-    transform->setCullingActive( false );
-    transform->addChild( geode.get() );
-    
-    osg::ref_ptr<osg::ClearNode> clearNode = new osg::ClearNode;
-    clearNode->setCullCallback( new TexMatCallback(*tm) );
-    clearNode->addChild( transform.get() );
-    return clearNode.release();
+    return new MySilverLiningNode( "Your user name", "Your license code" );
 }
+
+#else
+
+osg::Node* createSkyBox()
+{
+    return new osg::Node;
+}
+
+#endif
 
 /* Shadowed scene */
 
@@ -177,12 +142,28 @@ int main( int argc, char** argv )
     scene->addChild( shadowed ? createShadowedScene(model) : model );
     
     // Create the effect compositor from XML file
+#ifdef HAVE_SILVERLINING
+    osg::ref_ptr<osgDB::XmlNode> xmlRoot = osgDB::readXmlFile( effectFile );
+    if ( !xmlRoot )
+    {
+        OSG_WARN << "Effect file " << effectFile << " can't be loaded!" << std::endl;
+        return 1;
+    }
+    
+    // FIXME: here we use PIXEL_BUFFER instead, because SilverLining is uncomfortable with
+    // default FBO settings. I'm not sure if this is a SilverLining bug or mine
+    osgFX::EffectCompositor::XmlTemplateMap templateMap;
+    osgFX::EffectCompositor* compositor = new osgFX::EffectCompositor;
+    compositor->setRenderTargetImplementation( osg::Camera::PIXEL_BUFFER );
+    compositor->loadFromXML( xmlRoot.get(), templateMap, NULL );
+#else
     osgFX::EffectCompositor* compositor = osgFX::readEffectFile( effectFile );
     if ( !compositor )
     {
         OSG_WARN << "Effect file " << effectFile << " can't be loaded!" << std::endl;
         return 1;
     }
+#endif
     
     // For the fastest and simplest effect use, this is enough!
     compositor->addChild( scene.get() );

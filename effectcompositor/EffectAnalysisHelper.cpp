@@ -78,6 +78,12 @@ osg::Geometry* createQuad( const osg::Vec3& pos, float w, float h,
 class CompositorAnalysis : public osgGA::GUIEventHandler
 {
 public:
+    struct Connection
+    {
+        std::vector<osg::Vec3> starts;
+        std::vector<osg::Vec3> ends;
+    };
+    
     CompositorAnalysis( osg::Camera* cam, osgFX::EffectCompositor* c, int numBuffers=3 )
     :   _hudCamera(cam), _compositor(c), _startIndex(0)
     {
@@ -115,6 +121,7 @@ public:
     void applyEffectGraph( osgFX::EffectCompositor* c, float x, float y, float w, float h )
     {
         int numX = 1, numY = 0;
+        std::map<osg::Texture*, Connection> bufferConnectionMap;
         _graphDisplay->removeDrawables( 0, _graphDisplay->getNumDrawables() );
         
         const osgFX::EffectCompositor::PassList& passes = c->getPassList();
@@ -124,13 +131,6 @@ public:
             if ( pd.type!=osgFX::EffectCompositor::FORWARD_PASS ) numX++;
             numY++;
         }
-        
-        struct Connection
-        {
-            std::vector<osg::Vec3> starts;
-            std::vector<osg::Vec3> ends;
-        };
-        std::map<osg::Texture*, Connection> bufferConnectionMap;
         
         // Create pass blocks
         float intervalX = w/(float)numX, intervalY = h/(float)numY;
@@ -289,6 +289,7 @@ public:
                 // TODO
             }
             break;
+        default: break;
         }
         return false;
     }

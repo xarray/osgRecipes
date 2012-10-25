@@ -49,6 +49,10 @@ public:
         bool resetAsDisplayPass();
     };
     
+    /** Set the render target implementation used for new pass by default */
+    void setRenderTargetImplementation( osg::Camera::RenderTargetImplementation r ) { _renderTargetImpl = r; }
+    osg::Camera::RenderTargetImplementation getRenderTargetImplementation() const { return _renderTargetImpl; }
+    
     /** Set current technique (pass list) */
     void setCurrentTechnique( const std::string& tech ) { _currentTechnique = tech; }
     
@@ -250,6 +254,7 @@ protected:
     std::string _currentTechnique;
     
     osg::ref_ptr<osg::Geode> _quad;
+    osg::Camera::RenderTargetImplementation _renderTargetImpl;
     double _preservedZNear;
     double _preservedZFar;
 };
