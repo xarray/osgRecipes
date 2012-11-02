@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<compositor>
+    <shader name="smaa_edge_vs" type="vertex">
+        <file>smaa/edgedetection.vs</file>
+    </shader>
+    
+    <shader name="smaa_edge_ps" type="fragment">
+        <file>smaa/edgedetection.fs</file>
+    </shader>
+    
+    <shader name="smaa_blend_vs" type="vertex">
+        <file>smaa/blend.vs</file>
+    </shader>
+    
+    <shader name="smaa_blend_ps" type="fragment">
+        <file>smaa/blend.fs</file>
+    </shader>
+    
+    <shader name="smaa_neighborhood_vs" type="vertex">
+        <file>smaa/neighborhood.vs</file>
+    </shader>
+    
+    <shader name="smaa_neighborhood_ps" type="fragment">
+        <file>smaa/neighborhood.fs</file>
+    </shader>
+    
+    <buffer_template name="sceneBufferTemplate" type="2d">
+        <internal_format>rgba</internal_format>
+        <source_format>rgba</source_format>
+        <source_type>ubyte</source_type>
+    </buffer_template>
+    
+    <buffer_template name="computeBufferTemplate" type="2d">
+        <internal_format>rgba32f</internal_format>
+        <source_format>rgba</source_format>
+        <source_type>float</source_type>
+    </buffer_template>
+    
+    <buffer name="sceneData" width="1024" height="1024" template="sceneBufferTemplate" />
+    <buffer name="smaaEdgeResult" width="1024" height="1024" template="computeBufferTemplate" />
+    <buffer name="smaaBlendResult" width="1024" height="1024" template="computeBufferTemplate" />
+    
+    <texture name="smaaAreaTex" type="2d">
+        <rawfile s="160" t="560">smaa/smaa_area.raw</rawfile>
+        <internal_format>2</internal_format>
+        <source_format>luminance_alpha</source_format>
+        <source_type>ubyte</source_type>
+        <filter param="min_filter">linear</filter>
+        <filter param="mag_filter">linear</filter>
+        <wrap param="s">clamp_to_edge</wrap>
+        <wrap param="t">clamp_to_edge</wrap>
+    </texture>
+    
+    <texture name="smaaSearchTex" type="2d">
+        <rawfile s="66" t="33">smaa/smaa_search.raw</rawfile>
+        <internal_format>1</internal_format>
+        <source_format>luminance</source_format>
+        <source_type>ubyte</source_type>
+        <filter param="min_filter">nearest</filter>
+        <filter param="mag_filter">nearest</filter>
+        <wrap param="s">clamp_to_edge</wrap>
+        <wrap param="t">clamp_to_edge</wrap>
+    </texture>
+    
+    <technique>
+        <forward_pass name="OriginalScene">
+            <clear_color>0 0 0 1</clear_color>
+            <output_buffer target="color">sceneData</output_buffer>
+        </forward_pass>
+        
+        <deferred_pass name="SMAA_EdgeDetection">
+            <input_buffer unit="0" varname="sceneTex">sceneData</input_buffer>
+            <output_buffer target="color">smaaEdgeResult</output_buffer>
+            <shader>smaa_edge_vs</shader>
+            <shader>smaa_edge_ps</shader>
+        </deferred_pass>
+        
+        <deferred_pass name="SMAA_Blend">
+            <input_buffer unit="0" varname="edgeTex">smaaEdgeResult</input_buffer>
+            <texture unit="1" varname="areaTex">smaaAreaTex</texture>
+            <texture unit="2" varname="searchTex">smaaSearchTex</texture>
+            <output_buffer target="color">smaaBlendResult</output_buffer>
+            <shader>smaa_blend_vs</shader>
+            <shader>smaa_blend_ps</shader>
+        </deferred_pass>
+        
+        <deferred_pass name="SMAA_Final">
+            <input_buffer unit="0" varname="sceneTex">sceneData</input_buffer>
+            <input_buffer unit="1" varname="smaaTex">smaaBlendResult</input_buffer>
+            <shader>smaa_neighborhood_vs</shader>
+            <shader>smaa_neighborhood_ps</shader>
+        </deferred_pass>
+    </technique>
+</compositor>

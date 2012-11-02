@@ -238,6 +238,19 @@ osg::Camera* EffectCompositor::createPassFromXML( osgDB::XmlNode* xmlNode )
             osg::Vec4 color; ss >> color;
             camera->setClearColor( color );
         }
+        else if ( childName=="clear_mask" )
+        {
+            GLbitfield mask = 0;
+            std::stringstream ss; ss << xmlChild->getTrimmedContents();
+            while( !ss.eof() )
+            {
+                std::string value; ss >> value;
+                if ( value=="color" ) mask |= GL_COLOR_BUFFER_BIT;
+                else if ( value=="depth" ) mask |= GL_DEPTH_BUFFER_BIT;
+                else if ( value=="stencil" ) mask |= GL_STENCIL_BUFFER_BIT;
+            }
+            camera->setClearMask( mask );
+        }
         else if ( childName=="render_config" )
         {
             int order = atoi( xmlChild->properties["order"].c_str() );
@@ -261,6 +274,9 @@ osg::Camera* EffectCompositor::createPassFromXML( osgDB::XmlNode* xmlNode )
                 camera->setCullMaskLeft( mask );
                 camera->setCullMaskRight( mask );
             }
+            
+            std::string lodScale = xmlChild->properties["lodscale"];
+            if ( !lodScale.empty() ) camera->setLODScale( atof(lodScale.c_str()) );
         }
         else if ( childName=="near_far" )
         {
@@ -299,12 +315,13 @@ osg::Texture* EffectCompositor::createTextureFromXML( osgDB::XmlNode* xmlNode, b
         OSG_NOTICE << "EffectCompositor: inappropriate to create texture/buffer with empty name" << std::endl;
     
     bool isBufferObject = (xmlNode->name.find("buffer") != std::string::npos);
+    int w = 1, h = 1, d = 1;
     if ( type=="1d" )
     {
         osg::Texture1D* tex1D = new osg::Texture1D;
         if ( isBufferObject )
         {
-            int w = atoi( xmlNode->properties["width"].c_str() );
+            w = atoi( xmlNode->properties["width"].c_str() );
             tex1D->setTextureWidth( w>0?w:512 );
         }
         texture = tex1D;
@@ -314,8 +331,8 @@ osg::Texture* EffectCompositor::createTextureFromXML( osgDB::XmlNode* xmlNode, b
         osg::Texture2D* tex2D = new osg::Texture2D;
         if ( isBufferObject )
         {
-            int w = atoi( xmlNode->properties["width"].c_str() );
-            int h = atoi( xmlNode->properties["height"].c_str() );
+            w = atoi( xmlNode->properties["width"].c_str() );
+            h = atoi( xmlNode->properties["height"].c_str() );
             tex2D->setTextureSize( w>0?w:512, h>0?h:512 );
         }
         texture = tex2D;
@@ -325,9 +342,9 @@ osg::Texture* EffectCompositor::createTextureFromXML( osgDB::XmlNode* xmlNode, b
         osg::Texture2DArray* tex2DArray = new osg::Texture2DArray;
         if ( isBufferObject )
         {
-            int w = atoi( xmlNode->properties["width"].c_str() );
-            int h = atoi( xmlNode->properties["height"].c_str() );
-            int d = atoi( xmlNode->properties["depth"].c_str() );
+            w = atoi( xmlNode->properties["width"].c_str() );
+            h = atoi( xmlNode->properties["height"].c_str() );
+            d = atoi( xmlNode->properties["depth"].c_str() );
             tex2DArray->setTextureSize( w>0?w:512, h>0?h:512, d>0?d:512 );
         }
         texture = tex2DArray;
@@ -337,9 +354,9 @@ osg::Texture* EffectCompositor::createTextureFromXML( osgDB::XmlNode* xmlNode, b
         osg::Texture2DMultisample* tex2DMultisample = new osg::Texture2DMultisample;
         if ( isBufferObject )
         {
-            int w = atoi( xmlNode->properties["width"].c_str() );
-            int h = atoi( xmlNode->properties["height"].c_str() );
             int samples = atoi( xmlNode->properties["samples"].c_str() );
+            w = atoi( xmlNode->properties["width"].c_str() );
+            h = atoi( xmlNode->properties["height"].c_str() );
             tex2DMultisample->setTextureSize( w>0?w:512, h>0?h:512 );
             tex2DMultisample->setNumSamples( samples );
         }
@@ -350,9 +367,9 @@ osg::Texture* EffectCompositor::createTextureFromXML( osgDB::XmlNode* xmlNode, b
         osg::Texture3D* tex3D = new osg::Texture3D;
         if ( isBufferObject )
         {
-            int w = atoi( xmlNode->properties["width"].c_str() );
-            int h = atoi( xmlNode->properties["height"].c_str() );
-            int d = atoi( xmlNode->properties["depth"].c_str() );
+            w = atoi( xmlNode->properties["width"].c_str() );
+            h = atoi( xmlNode->properties["height"].c_str() );
+            d = atoi( xmlNode->properties["depth"].c_str() );
             tex3D->setTextureSize( w>0?w:512, h>0?h:512, d>0?d:512 );
         }
         texture = tex3D;
@@ -362,8 +379,8 @@ osg::Texture* EffectCompositor::createTextureFromXML( osgDB::XmlNode* xmlNode, b
         osg::TextureRectangle* texRect = new osg::TextureRectangle;
         if ( isBufferObject )
         {
-            int w = atoi( xmlNode->properties["width"].c_str() );
-            int h = atoi( xmlNode->properties["height"].c_str() );
+            w = atoi( xmlNode->properties["width"].c_str() );
+            h = atoi( xmlNode->properties["height"].c_str() );
             texRect->setTextureSize( w>0?w:512, h>0?h:512 );
         }
         texture = texRect;
@@ -373,8 +390,8 @@ osg::Texture* EffectCompositor::createTextureFromXML( osgDB::XmlNode* xmlNode, b
         osg::TextureCubeMap* texCubemap = new osg::TextureCubeMap;
         if ( isBufferObject )
         {
-            int w = atoi( xmlNode->properties["width"].c_str() );
-            int h = atoi( xmlNode->properties["height"].c_str() );
+            w = atoi( xmlNode->properties["width"].c_str() );
+            h = atoi( xmlNode->properties["height"].c_str() );
             texCubemap->setTextureSize( w>0?w:512, h>0?h:512 );
         }
         texture = texCubemap;
@@ -386,6 +403,8 @@ osg::Texture* EffectCompositor::createTextureFromXML( osgDB::XmlNode* xmlNode, b
     texture->setFilter( osg::Texture2D::MIN_FILTER, osg::Texture2D::LINEAR );
     texture->setFilter( osg::Texture2D::MAG_FILTER, osg::Texture2D::LINEAR );
     
+    osg::Image* image = NULL;
+    unsigned char* imageData = NULL;
     for ( unsigned int i=0; i<xmlNode->children.size(); ++i )
     {
         osgDB::XmlNode* xmlChild = xmlNode->children[i].get();
@@ -394,8 +413,11 @@ osg::Texture* EffectCompositor::createTextureFromXML( osgDB::XmlNode* xmlNode, b
         
         if ( childName=="file" )
         {
+            std::string options = xmlChild->properties["options"];
+            if ( options.empty() ) image = osgDB::readImageFile( xmlChild->getTrimmedContents() );
+            else image = osgDB::readImageFile( xmlChild->getTrimmedContents(), new osgDB::Options(options) );
+            
             std::string index = xmlChild->properties["index"];
-            osg::Image* image = osgDB::readImageFile( xmlChild->getTrimmedContents() );
             texture->setImage( atoi(index.c_str()), image );
             
             std::string animated = xmlChild->properties["animated"];
@@ -403,6 +425,26 @@ osg::Texture* EffectCompositor::createTextureFromXML( osgDB::XmlNode* xmlNode, b
             {
                 osg::ImageStream* imageStream = dynamic_cast<osg::ImageStream*>( image );
                 if ( imageStream ) imageStream->play();
+            }
+        }
+        else if ( childName=="rawfile" )
+        {
+            int offset = atoi( xmlChild->properties["offset"].c_str() );
+            w = atoi( xmlChild->properties["s"].c_str() );
+            h = atoi( xmlChild->properties["t"].c_str() );
+            d = atoi( xmlChild->properties["r"].c_str() );
+            
+            std::string rawfile = xmlChild->getTrimmedContents();
+            std::ifstream ifs( rawfile.c_str(), std::ifstream::in|std::ifstream::binary|std::ios_base::ate );
+            if ( ifs )
+            {
+                int length = (int)ifs.tellg() - offset;
+                ifs.seekg( offset, std::ios_base::beg );
+                ifs.clear();
+                
+                imageData = new unsigned char[length];
+                ifs.read( (char*)imageData, length );
+                ifs.close();
             }
         }
         else if ( childName=="wrap" )
@@ -491,6 +533,14 @@ osg::Texture* EffectCompositor::createTextureFromXML( osgDB::XmlNode* xmlNode, b
         }
         else
             OSG_NOTICE << "EffectCompositor: <texture> doesn't recognize child element " << xmlChild->name << std::endl;
+    }
+    
+    if ( imageData!=NULL )
+    {
+        image = new osg::Image;
+        image->setImage( w>0?w:1, h>0?h:1, d>0?d:1, texture->getInternalFormat(), texture->getSourceFormat(),
+                         texture->getSourceType(), imageData, osg::Image::USE_NEW_DELETE );
+        texture->setImage( 0, image );
     }
     
     if ( asGlobal )
