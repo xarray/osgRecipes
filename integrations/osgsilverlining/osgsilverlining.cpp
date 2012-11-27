@@ -93,11 +93,10 @@ public:
 osg::Group* createShadowedScene( osg::Node* scene, osg::LightSource* ls )
 {
     osg::ref_ptr<osgShadow::ShadowSettings> settings = new osgShadow::ShadowSettings;
-    settings->setShadowMapTechniqueHints( osgShadow::ShadowSettings::PARALLEL_SPLIT|osgShadow::ShadowSettings::PERSPECTIVE );
+    //settings->setShadowMapTechniqueHints( osgShadow::ShadowSettings::PARALLEL_SPLIT|osgShadow::ShadowSettings::PERSPECTIVE );
     settings->setShaderHint( osgShadow::ShadowSettings::PROVIDE_FRAGMENT_SHADER );
 	settings->setTextureSize( osg::Vec2s(2048, 2048) );
-    settings->setNumShadowMapsPerLight( 3 );
-    settings->setMaximumShadowMapNearFarDistance( 5000.0 );
+    //settings->setNumShadowMapsPerLight( 3 );
     
     osg::ref_ptr<osgShadow::ShadowedScene> shadowedScene = new osgShadow::ShadowedScene;
 	shadowedScene->setReceivesShadowTraversalMask( SHADOW_RECEIVE_MASK );

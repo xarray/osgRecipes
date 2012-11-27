@@ -16,6 +16,66 @@
 #include <osgDB/FileNameUtils>
 #include <osgDB/ReadFile>
 
+//Adapted from osgEarth/VPB
+static std::string getFullPath(const std::string& relativeTo, const std::string &relativePath)
+{
+    if (osgDB::isAbsolutePath(relativePath) || relativeTo.empty())
+    {
+        return relativePath;
+    }
+
+    //If they didn't specify a relative path, just return the relativeTo
+    if (relativePath.empty()) return relativeTo;
+
+
+    //Note:  Modified from VPB
+
+    //Concatinate the paths together
+    std::string filename;
+    if ( !osgDB::containsServerAddress( relativeTo ) )
+        filename = osgDB::concatPaths( osgDB::getFilePath( osgDB::getRealPath( relativeTo )), relativePath);
+    else
+        filename = osgDB::concatPaths( osgDB::getFilePath( relativeTo ), relativePath);
+
+
+    std::list<std::string> directories;
+    int start = 0;
+    for (unsigned int i = 0; i < filename.size(); ++i)
+    {
+        if (filename[i] == '\\' || filename[i] == '/')
+        {
+            //Get the current directory
+            std::string dir = filename.substr(start, i-start);
+
+            if (dir != "..")
+            {
+                if (dir != ".")
+                {
+                    directories.push_back(dir);
+                }
+            }
+            else if (!directories.empty())
+            {
+                directories.pop_back();
+            }
+            start = i + 1;
+        }
+    }
+
+    std::string path;
+    for (std::list<std::string>::iterator itr = directories.begin();
+        itr != directories.end();
+        ++itr)
+    {
+        path += *itr;
+        path += "/";
+    }
+
+    path += filename.substr(start, std::string::npos);
+
+    return path;
+}
+
 class ReaderWriterAssImp : public osgDB::ReaderWriter
 {
     typedef std::map<std::string, osg::ref_ptr<osg::Texture> > TextureMap;
@@ -90,68 +150,8 @@ public:
     }
     
 protected:
-
-    //Adapted from osgEarth/VPB
-    static std::string getFullPath(const std::string& relativeTo, const std::string &relativePath)
-    {
-        if (osgDB::isAbsolutePath(relativePath) || relativeTo.empty())
-        {
-            return relativePath;
-        }
-
-        //If they didn't specify a relative path, just return the relativeTo
-        if (relativePath.empty()) return relativeTo;
-
-
-        //Note:  Modified from VPB
-
-        //Concatinate the paths together
-        std::string filename;
-        if ( !osgDB::containsServerAddress( relativeTo ) )
-            filename = osgDB::concatPaths( osgDB::getFilePath( osgDB::getRealPath( relativeTo )), relativePath);
-        else
-            filename = osgDB::concatPaths( osgDB::getFilePath( relativeTo ), relativePath);
-
-
-        std::list<std::string> directories;
-        int start = 0;
-        for (unsigned int i = 0; i < filename.size(); ++i)
-        {
-            if (filename[i] == '\\' || filename[i] == '/')
-            {
-                //Get the current directory
-                std::string dir = filename.substr(start, i-start);
-
-                if (dir != "..")
-                {
-                    if (dir != ".")
-                    {
-                        directories.push_back(dir);
-                    }
-                }
-                else if (!directories.empty())
-                {
-                    directories.pop_back();
-                }
-                start = i + 1;
-            }
-        }
-
-        std::string path;
-        for (std::list<std::string>::iterator itr = directories.begin();
-            itr != directories.end();
-            ++itr)
-        {
-            path += *itr;
-            path += "/";
-        }
-
-        path += filename.substr(start, std::string::npos);
-
-        return path;
-    }
-
-    osg::Node* traverseAIScene( const std::string& filename, const struct aiScene* aiScene, const struct aiNode* aiNode, TextureMap& textures, const osgDB::Options* options ) const
+    osg::Node* traverseAIScene( const std::string& filename, const struct aiScene* aiScene, const struct aiNode* aiNode,
+                                TextureMap& textures, const osgDB::Options* options ) const
     {
         osg::Geode* geode = new osg::Geode;
         for ( unsigned int n=0; n<aiNode->mNumMeshes; ++n )
@@ -275,11 +275,9 @@ protected:
                 if ( texFound!=AI_SUCCESS ) break;
                 
                 std::string texFile(path.data);
-
-                if (!osgDB::isAbsolutePath( texFile ) )
-                {
+    
+                if ( !osgDB::isAbsolutePath(texFile) )
                     texFile = getFullPath( filename, texFile );
-                }
                 
                 TextureMap::iterator itr = textures.find(texFile);
                 if ( itr==textures.end() )
@@ -299,39 +297,7 @@ protected:
             }
             
             // Create materials
-            aiColor4D c;
-            osg::Material* material = new osg::Material;
-            if ( aiGetMaterialColor(aiMtl, AI_MATKEY_COLOR_AMBIENT, &c)==AI_SUCCESS )
-                material->setAmbient( osg::Material::FRONT_AND_BACK, osg::Vec4(c.r, c.g, c.b, c.a) );
-            if ( aiGetMaterialColor(aiMtl, AI_MATKEY_COLOR_DIFFUSE, &c)==AI_SUCCESS )
-                material->setDiffuse( osg::Material::FRONT_AND_BACK, osg::Vec4(c.r, c.g, c.b, c.a) );
-            if ( aiGetMaterialColor(aiMtl, AI_MATKEY_COLOR_SPECULAR, &c)==AI_SUCCESS )
-                material->setSpecular( osg::Material::FRONT_AND_BACK, osg::Vec4(c.r, c.g, c.b, c.a) );
-            if ( aiGetMaterialColor(aiMtl, AI_MATKEY_COLOR_EMISSIVE, &c)==AI_SUCCESS )
-                material->setEmission( osg::Material::FRONT_AND_BACK, osg::Vec4(c.r, c.g, c.b, c.a) );
-            
-            unsigned int maxValue = 1;
-            float shininess = 0.0f, strength = 1.0f;
-            if ( aiGetMaterialFloatArray(aiMtl, AI_MATKEY_SHININESS, &shininess, &maxValue)==AI_SUCCESS )
-            {
-                maxValue = 1;
-                if ( aiGetMaterialFloatArray( aiMtl, AI_MATKEY_SHININESS_STRENGTH, &strength, &maxValue )==AI_SUCCESS )
-                    shininess *= strength;
-                material->setShininess( osg::Material::FRONT_AND_BACK, shininess );
-            }
-            else
-            {
-                material->setShininess( osg::Material::FRONT_AND_BACK, 0.0f );
-                material->setSpecular( osg::Material::FRONT_AND_BACK, osg::Vec4() );
-            }
-            ss->setAttributeAndModes( material );
-            
-            int wireframe = 0; maxValue = 1;
-            if ( aiGetMaterialIntegerArray(aiMtl, AI_MATKEY_ENABLE_WIREFRAME, &wireframe, &maxValue)==AI_SUCCESS )
-            {
-                ss->setAttributeAndModes( new osg::PolygonMode(
-                    osg::PolygonMode::FRONT_AND_BACK, wireframe ? osg::PolygonMode::LINE : osg::PolygonMode::FILL) );
-            }
+            createMaterialData( ss, aiMtl );
         }
         
         aiMatrix4x4 m = aiNode->mTransformation; m.Transpose();
@@ -344,6 +310,43 @@ protected:
         }
         mt->addChild( geode );
         return mt;
+    }
+    
+    void createMaterialData( osg::StateSet* ss, const aiMaterial* aiMtl ) const
+    {
+        aiColor4D c;
+        osg::Material* material = new osg::Material;
+        if ( aiGetMaterialColor(aiMtl, AI_MATKEY_COLOR_AMBIENT, &c)==AI_SUCCESS )
+            material->setAmbient( osg::Material::FRONT_AND_BACK, osg::Vec4(c.r, c.g, c.b, c.a) );
+        if ( aiGetMaterialColor(aiMtl, AI_MATKEY_COLOR_DIFFUSE, &c)==AI_SUCCESS )
+            material->setDiffuse( osg::Material::FRONT_AND_BACK, osg::Vec4(c.r, c.g, c.b, c.a) );
+        if ( aiGetMaterialColor(aiMtl, AI_MATKEY_COLOR_SPECULAR, &c)==AI_SUCCESS )
+            material->setSpecular( osg::Material::FRONT_AND_BACK, osg::Vec4(c.r, c.g, c.b, c.a) );
+        if ( aiGetMaterialColor(aiMtl, AI_MATKEY_COLOR_EMISSIVE, &c)==AI_SUCCESS )
+            material->setEmission( osg::Material::FRONT_AND_BACK, osg::Vec4(c.r, c.g, c.b, c.a) );
+        
+        unsigned int maxValue = 1;
+        float shininess = 0.0f, strength = 1.0f;
+        if ( aiGetMaterialFloatArray(aiMtl, AI_MATKEY_SHININESS, &shininess, &maxValue)==AI_SUCCESS )
+        {
+            maxValue = 1;
+            if ( aiGetMaterialFloatArray( aiMtl, AI_MATKEY_SHININESS_STRENGTH, &strength, &maxValue )==AI_SUCCESS )
+                shininess *= strength;
+            material->setShininess( osg::Material::FRONT_AND_BACK, shininess );
+        }
+        else
+        {
+            material->setShininess( osg::Material::FRONT_AND_BACK, 0.0f );
+            material->setSpecular( osg::Material::FRONT_AND_BACK, osg::Vec4() );
+        }
+        ss->setAttributeAndModes( material );
+        
+        int wireframe = 0; maxValue = 1;
+        if ( aiGetMaterialIntegerArray(aiMtl, AI_MATKEY_ENABLE_WIREFRAME, &wireframe, &maxValue)==AI_SUCCESS )
+        {
+            ss->setAttributeAndModes( new osg::PolygonMode(
+                osg::PolygonMode::FRONT_AND_BACK, wireframe ? osg::PolygonMode::LINE : osg::PolygonMode::FILL) );
+        }
     }
     
     osg::TexEnv::Mode getEnvMode( aiTextureOp mode ) const

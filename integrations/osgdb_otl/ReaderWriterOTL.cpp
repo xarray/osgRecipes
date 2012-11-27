@@ -298,7 +298,7 @@ protected:
                 std::stringstream ss; ss << "drop table " << tableName;
                 otl_cursor::direct_exec( _database, ss.str().c_str(), otl_exception::disabled );
                 
-                ss.str( "" ); ss << "create table " << tableName << "(f1 varchar(63) primary key, f2 int, f3 blob)";;
+                ss.str( "" ); ss << "create table " << tableName << "(f1 varchar(63) primary key, f2 int, f3 blob)";
                 otl_cursor::direct_exec( _database, ss.str().c_str() );
             }
             

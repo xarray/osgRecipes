@@ -3,8 +3,11 @@ PROJECT(OSG_Integrations)
 SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR};${CMAKE_MODULE_PATH}")
 SET(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "add a postfix, usually d on windows")
 INCLUDE(CheckIncludeFiles)
+
 FIND_PACKAGE(OpenGL)
 FIND_PACKAGE(GLEW)
+FIND_PACKAGE(OpenCV COMPONENTS core imgproc)
+FIND_PACKAGE(ALVAR)
 
 IF(WIN32)
     IF(MSVC)
@@ -106,13 +109,13 @@ ADD_SUBDIRECTORY(osgrvo2)             # OSG & RVO2
 ADD_SUBDIRECTORY(osgdb_otl)           # OSG & Oracle/ODBC/DB2 Template Library
 
 # Wave 3
+#ADD_SUBDIRECTORY(osgagg)              # OSG & AGG
+ADD_SUBDIRECTORY(osgalvar)            # OSG & ALVAR
 #ADD_SUBDIRECTORY(osgberkelium)        # OSG & Berkelium
 ADD_SUBDIRECTORY(osgdirectwrite)      # OSG & Microsoft DirectWrite
 #ADD_SUBDIRECTORY(osgois)              # OSG & OIS
-#ADD_SUBDIRECTORY(osggls)              # OSG & libGLS
+ADD_SUBDIRECTORY(osgqt5)              # OSG & Qt 5.x
 #ADD_SUBDIRECTORY(osgrecast)           # OSG & Recastnavigation
-#ADD_SUBDIRECTORY(osgroboop)           # OSG & ROBOOP
-#ADD_SUBDIRECTORY(osgrtmidi)           # OSG & RT-Midi
 ADD_SUBDIRECTORY(osgsilverlining)     # OSG & Sundog Silverlining
 #ADD_SUBDIRECTORY(osgtriton)           # OSG & Sundog Triton
 
@@ -122,11 +125,15 @@ ADD_SUBDIRECTORY(osgsilverlining)     # OSG & Sundog Silverlining
 #ADD_SUBDIRECTORY(osgdance)            # OSG & DANCE
 #ADD_SUBDIRECTORY(osggameswf)          # OSG & GameSWF
 #ADD_SUBDIRECTORY(osgguichan)          # OSG & GUIChan
+#ADD_SUBDIRECTORY(osgdb_cdr)           # OSG & libCDR
+#ADD_SUBDIRECTORY(osggls)              # OSG & libGLS
 #ADD_SUBDIRECTORY(osgmini)             # OSG & libMini
 #ADD_SUBDIRECTORY(osgmathgl)           # OSG & MathGL
 #ADD_SUBDIRECTORY(osgmupdf)            # OSG & MuPDF
 #ADD_SUBDIRECTORY(osgnewton)           # OSG & Newton Physics
 #ADD_SUBDIRECTORY(osgnurbs)            # OSG & openNURBS
 #ADD_SUBDIRECTORY(osgsteers)           # OSG & OpenSteers
+#ADD_SUBDIRECTORY(osgroboop)           # OSG & ROBOOP
+#ADD_SUBDIRECTORY(osgrtmidi)           # OSG & RT-Midi
 #ADD_SUBDIRECTORY(osgwoody3d)          # OSG & Woody3D
 #ADD_SUBDIRECTORY(osgxaos)             # OSG & XaoS
