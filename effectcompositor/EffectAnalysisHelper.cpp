@@ -336,9 +336,6 @@ void configureViewerForMode( osgViewer::Viewer& viewer, osgFX::EffectCompositor*
             root->addChild( model );
         }
         break;
-    case 3:  // multiview mode
-        // TODO
-        break;
     default: break;
     }
 }

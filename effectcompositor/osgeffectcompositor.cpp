@@ -87,10 +87,12 @@ osg::Node* createSkyBox()
 osg::Group* createShadowedScene( osg::Node* scene )
 {
     osg::ref_ptr<osgShadow::ShadowSettings> settings = new osgShadow::ShadowSettings;
-    //settings->setShadowMapTechniqueHints( osgShadow::ShadowSettings::PARALLEL_SPLIT|osgShadow::ShadowSettings::PERSPECTIVE );
     settings->setShaderHint( osgShadow::ShadowSettings::PROVIDE_FRAGMENT_SHADER );
 	settings->setTextureSize( osg::Vec2s(2048, 2048) );
-    //settings->setNumShadowMapsPerLight( 3 );
+#if 0
+    settings->setShadowMapTechniqueHints( osgShadow::ShadowSettings::PARALLEL_SPLIT|osgShadow::ShadowSettings::PERSPECTIVE );
+    settings->setNumShadowMapsPerLight( 3 );
+#endif
     
     osg::ref_ptr<osgShadow::ShadowedScene> shadowedScene = new osgShadow::ShadowedScene;
 	shadowedScene->setReceivesShadowTraversalMask( SHADOW_RECEIVE_MASK );
@@ -121,7 +123,6 @@ int main( int argc, char** argv )
     if ( arguments.read("--simple-mode") ) displayMode = 0;
     else if ( arguments.read("--analysis-mode") ) displayMode = 1;
     else if ( arguments.read("--compare-mode") ) displayMode = 2;
-    else if ( arguments.read("--multiview-mode") ) displayMode = 3;
     
     std::string effectFile("test.xml");
     arguments.read( "--effect", effectFile );
@@ -131,6 +132,9 @@ int main( int argc, char** argv )
     
     float lodscale = 1.0f;
     arguments.read( "--lod-scale", lodscale );
+    
+    std::string normalSceneFile;
+    arguments.read( "--normal-scene", normalSceneFile );
     
     // Create the scene
     osg::Node* model = osgDB::readNodeFiles( arguments );
@@ -149,11 +153,11 @@ int main( int argc, char** argv )
         return 1;
     }
     
-    // FIXME: here we use PIXEL_BUFFER instead, because SilverLining is uncomfortable with
-    // default FBO settings. I'm not sure if this is a SilverLining bug or mine
+    // FIXME: SilverLining seems to be uncomfortable with default FBO settings?
+    //        I'm not sure if this is a SilverLining bug or mine
     osgFX::EffectCompositor::XmlTemplateMap templateMap;
     osgFX::EffectCompositor* compositor = new osgFX::EffectCompositor;
-    compositor->setRenderTargetImplementation( osg::Camera::PIXEL_BUFFER );
+    //compositor->setRenderTargetImplementation( osg::Camera::PIXEL_BUFFER );  // FIXME: PIXEL_BUFFER can't work with NVIDIA 310.70 driver?
     compositor->loadFromXML( xmlRoot.get(), templateMap, NULL );
 #else
     osgFX::EffectCompositor* compositor = osgFX::readEffectFile( effectFile );
@@ -170,6 +174,12 @@ int main( int argc, char** argv )
     // Add all to the root node of the viewer
     osg::ref_ptr<osg::Group> root = new osg::Group;
     root->addChild( compositor );
+    
+    if ( !normalSceneFile.empty() )
+    {
+        // 
+        root->addChild( osgDB::readNodeFile(normalSceneFile) );
+    }
     
     osgViewer::Viewer viewer;
     viewer.getCamera()->setLODScale( lodscale );

@@ -254,7 +254,9 @@ osg::Camera* EffectCompositor::createPassFromXML( osgDB::XmlNode* xmlNode )
         else if ( childName=="render_config" )
         {
             int order = atoi( xmlChild->properties["order"].c_str() );
-            camera->setRenderOrder( osg::Camera::PRE_RENDER, order );
+            int nested = atoi( xmlChild->properties["nested"].c_str() );
+            if ( nested!=0 ) camera->setRenderOrder( osg::Camera::NESTED_RENDER, order );
+            else camera->setRenderOrder( osg::Camera::PRE_RENDER, order );
             
             std::string target = xmlChild->properties["target_method"];
             if ( target=="frame_buffer" ) camera->setRenderTargetImplementation( osg::Camera::FRAME_BUFFER );
@@ -299,9 +301,10 @@ osg::Camera* EffectCompositor::createPassFromXML( osgDB::XmlNode* xmlNode )
     {
         // Automatically treat camera without outputs as the final one and render it as an HUD
         // Note that FBO should be changed back to FRAME_BUFFER for handling camera resizing
-        camera->setClearMask( GL_DEPTH_BUFFER_BIT );
-        camera->setRenderOrder( osg::Camera::POST_RENDER );
+        camera->setClearMask( 0 );
         camera->setRenderTargetImplementation( osg::Camera::FRAME_BUFFER );
+        if ( camera->getRenderOrder()!=osg::Camera::NESTED_RENDER )
+            camera->setRenderOrder( osg::Camera::POST_RENDER );
     }
     return camera;
 }

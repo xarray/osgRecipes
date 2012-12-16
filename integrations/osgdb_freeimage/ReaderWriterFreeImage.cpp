@@ -92,7 +92,7 @@ public:
 #endif
     }
     
-    virtual ReadResult readImage( const std::istream& fin, const osgDB::ReaderWriter::Options* options ) const
+    virtual ReadResult readImage( std::istream& fin, const osgDB::ReaderWriter::Options* options ) const
     {
         FREE_IMAGE_FORMAT fif = FIF_UNKNOWN;
         if ( options )
