@@ -1,3 +1,5 @@
+// Remember to copy Arial.ttf from your system directory (or OSG data directory) to the executable folder
+
 #include <osg/Image>
 #include <osg/MatrixTransform>
 #include <osgDB/ReadFile>
@@ -5,7 +7,10 @@
 #include <osgViewer/ViewerEventHandlers>
 #include <osgViewer/Viewer>
 
+#ifdef OSGAGG_USE_FREETYPE
 #include <font_freetype/agg_font_freetype.h>
+#endif
+
 #include <agg_renderer_scanline.h>
 #include <agg_rendering_buffer.h>
 #include <agg_renderer_base.h>
@@ -38,6 +43,7 @@ osg::Image* gradientImage()
 
 osg::Image* textImage()
 {
+#ifdef OSGAGG_USE_FREETYPE
     unsigned char* buffer = new unsigned char[640 * 480 * 4];
     agg::rendering_buffer renderingBuf( buffer, 640, 480, 640*4 );
     agg::pixfmt_rgba32 pixelFormat( renderingBuf );
@@ -90,6 +96,10 @@ osg::Image* textImage()
     osg::ref_ptr<osg::Image> image = new osg::Image;
     image->setImage( 640, 480, 1, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, buffer, osg::Image::USE_NEW_DELETE );
     return image.release();
+#else
+    OSG_NOTICE << "[osgagg] FreeType support not built" << std::endl;
+    return new osg::Image;
+#endif
 }
 
 osg::Node* createImageQuad( osg::Image* image, const osg::Vec3& corner )

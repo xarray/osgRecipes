@@ -42,6 +42,8 @@ Integrations
 This section will show you how to integrate OSG with different kinds of libraries and SDKs. These libraries can add extra functionalities like special effects, visual components and interaction methods to your OSG scene and greatly improve the performance of the applications. These libraries must be free for downloading and for non-commercial purpose of use. The license of the example code may vary according to the license of the third-party library if it does not fit the public domain.
 
 The third-party libraries that can be embedded with OSG are listed here for downloading:
+* AGG (the anti-grain geometry library for 2D rendering): already included in the source code
+* ALVAR (virtual and augmented reality develop library): http://virtual.vtt.fi/virtual/proj2/multimedia/alvar/index.html
 * AntTweakBar (a light and intuitive GUI framework): http://www.antisphere.com/Wiki/tools:anttweakbar
 * AssImp (a library to import various well-known 3D model formats): http://assimp.sourceforge.net/
 * Awesomium (a web-browser framework for in-app browsing and HTML UIs): http://awesomium.com/
