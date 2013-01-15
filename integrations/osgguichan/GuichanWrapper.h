@@ -15,16 +15,18 @@
 #include <osgGA/GUIEventHandler>
 #include <queue>
 
+class GuichanDrawable;
+
 class GuichanImageLoader : public gcn::ImageLoader
 {
 public:
     virtual gcn::Image* load( const std::string& filename, bool convertToDisplayFormat=true );
 };
 
-class GuichanEventInput : public osg::Drawable::EventCallback, public gcn::Input
+class GuichanEventInput : public gcn::Input
 {
 public:
-    virtual void event( osg::NodeVisitor* nv, osg::Drawable* drawable );
+    virtual void pushInput( const osgGA::GUIEventAdapter& ea );
     virtual void _pollInput() {}
     
     virtual bool isKeyQueueEmpty() { return _keyInputQueue.empty(); }
@@ -33,11 +35,14 @@ public:
     virtual bool isMouseQueueEmpty() { return _mouseInputQueue.empty(); }
     virtual gcn::MouseInput dequeueMouseInput();
     
+    GuichanEventInput( GuichanDrawable* g=NULL ) : _guichan(g) {}
+    
 protected:
     int convertMouseButton( int button );
     void convertKeyValue( gcn::KeyInput&, int key );
     void convertModKeyValue( gcn::KeyInput&, int modkey );
     
+    GuichanDrawable* _guichan;
     std::queue<gcn::KeyInput> _keyInputQueue;
     std::queue<gcn::MouseInput> _mouseInputQueue;
 };
@@ -52,7 +57,8 @@ public:
     void addWidget( gcn::Widget* widget ) { _container->add( widget ); }
     void addWidget( gcn::Widget* widget, int x, int y ) { _container->add( widget, x, y ); }
     
-    void setViewport( int x, int y, int width, int height );
+    void setContainerSize( int x, int y, int width, int height );
+    void pushInput( const osgGA::GUIEventAdapter& ea ) { _input->pushInput(ea); }
     bool isValid() const { return _initialized; }
     
     gcn::Gui* getGUIElement() { return _gui; }
@@ -63,8 +69,7 @@ public:
 protected:
     virtual ~GuichanDrawable();
     
-    osg::ref_ptr<osg::Viewport> _viewport;
-    osg::ref_ptr<GuichanEventInput> _input;
+    GuichanEventInput* _input;
     gcn::Gui* _gui;
     gcn::Container* _container;
     gcn::Graphics* _graphics;

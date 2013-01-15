@@ -41,81 +41,68 @@ gcn::Image* GuichanImageLoader::load( const std::string& filename, bool convertT
     return image;
 }
 
-void GuichanEventInput::event( osg::NodeVisitor* nv, osg::Drawable* drawable )
+void GuichanEventInput::pushInput( const osgGA::GUIEventAdapter& ea )
 {
-    osgGA::EventVisitor* ev = static_cast<osgGA::EventVisitor*>( nv );
-    GuichanDrawable* guichan = static_cast<GuichanDrawable*>( drawable );
-    if ( !ev || !guichan ) return;
+    float x = ea.getX(), y = ea.getY();
+    if ( ea.getMouseYOrientation()==osgGA::GUIEventAdapter::Y_INCREASING_UPWARDS )
+        y = ea.getWindowHeight() - y;
     
-    const osgGA::EventQueue::Events& events = ev->getEvents();
-    for ( osgGA::EventQueue::Events::const_iterator itr=events.begin();
-          itr!=events.end(); ++itr )
+    gcn::KeyInput keyInput;
+    gcn::MouseInput mouseInput;
+    switch ( ea.getEventType() )
     {
-        const osgGA::GUIEventAdapter& ea = *(itr->get());
-        float x = ea.getX(), y = ea.getY();
-        if ( ea.getMouseYOrientation()==osgGA::GUIEventAdapter::Y_INCREASING_UPWARDS )
-            y = ea.getWindowHeight() - y;
-        
-        gcn::KeyInput keyInput;
-        gcn::MouseInput mouseInput;
-        switch ( ea.getEventType() )
-        {
-        case osgGA::GUIEventAdapter::PUSH:
-            mouseInput.setX( x );
-            mouseInput.setY( y );
-            mouseInput.setType( gcn::MouseInput::Pressed );
-            mouseInput.setButton( convertMouseButton(ea.getButton()) );
-            mouseInput.setTimeStamp( ea.getTime() );
-            _mouseInputQueue.push( mouseInput );
-            break;
-        case osgGA::GUIEventAdapter::RELEASE:
-            mouseInput.setX( x );
-            mouseInput.setY( y );
-            mouseInput.setType( gcn::MouseInput::Released );
-            mouseInput.setButton( convertMouseButton(ea.getButton()) );
-            mouseInput.setTimeStamp( ea.getTime() );
-            _mouseInputQueue.push( mouseInput );
-            break;
-        case osgGA::GUIEventAdapter::MOVE:
-            mouseInput.setX( x );
-            mouseInput.setY( y );
-            mouseInput.setType( gcn::MouseInput::Moved );
-            mouseInput.setButton( gcn::MouseInput::Empty );
-            mouseInput.setTimeStamp( ea.getTime() );
-            _mouseInputQueue.push( mouseInput );
-            break;
-        case osgGA::GUIEventAdapter::SCROLL:
-            mouseInput.setX( x );
-            mouseInput.setY( y );
-            if ( ea.getScrollingMotion()==osgGA::GUIEventAdapter::SCROLL_UP )
-                mouseInput.setType( gcn::MouseInput::WheelMovedUp );
-            else if ( ea.getScrollingMotion()==osgGA::GUIEventAdapter::SCROLL_DOWN )
-                mouseInput.setType( gcn::MouseInput::WheelMovedDown );
-            mouseInput.setButton( convertMouseButton(ea.getButton()) );
-            mouseInput.setTimeStamp( ea.getTime() );
-            _mouseInputQueue.push( mouseInput );
-            break;
-        case osgGA::GUIEventAdapter::KEYDOWN:
-            convertKeyValue( keyInput, ea.getKey() );
-            convertModKeyValue( keyInput, ea.getModKeyMask() );
-            keyInput.setType( gcn::KeyInput::Pressed );
-            _keyInputQueue.push( keyInput );
-            break;
-        case osgGA::GUIEventAdapter::KEYUP:
-            convertKeyValue( keyInput, ea.getKey() );
-            convertModKeyValue( keyInput, ea.getModKeyMask() );
-            keyInput.setType( gcn::KeyInput::Released );
-            _keyInputQueue.push( keyInput );
-            break;
-        case osgGA::GUIEventAdapter::RESIZE:
-            guichan->setViewport( ea.getWindowX(), ea.getWindowY(), ea.getWindowWidth(), ea.getWindowHeight() );
-            break;
-        case osgGA::GUIEventAdapter::FRAME:
-            if ( guichan->isValid() )
-                guichan->getGUIElement()->logic();
-            break;
-        default: break;
-        }
+    case osgGA::GUIEventAdapter::PUSH:
+        mouseInput.setX( x );
+        mouseInput.setY( y );
+        mouseInput.setType( gcn::MouseInput::Pressed );
+        mouseInput.setButton( convertMouseButton(ea.getButton()) );
+        mouseInput.setTimeStamp( ea.getTime() );
+        _mouseInputQueue.push( mouseInput );
+        break;
+    case osgGA::GUIEventAdapter::RELEASE:
+        mouseInput.setX( x );
+        mouseInput.setY( y );
+        mouseInput.setType( gcn::MouseInput::Released );
+        mouseInput.setButton( convertMouseButton(ea.getButton()) );
+        mouseInput.setTimeStamp( ea.getTime() );
+        _mouseInputQueue.push( mouseInput );
+        break;
+    case osgGA::GUIEventAdapter::MOVE:
+        mouseInput.setX( x );
+        mouseInput.setY( y );
+        mouseInput.setType( gcn::MouseInput::Moved );
+        mouseInput.setButton( gcn::MouseInput::Empty );
+        mouseInput.setTimeStamp( ea.getTime() );
+        _mouseInputQueue.push( mouseInput );
+        break;
+    case osgGA::GUIEventAdapter::SCROLL:
+        mouseInput.setX( x );
+        mouseInput.setY( y );
+        if ( ea.getScrollingMotion()==osgGA::GUIEventAdapter::SCROLL_UP )
+            mouseInput.setType( gcn::MouseInput::WheelMovedUp );
+        else if ( ea.getScrollingMotion()==osgGA::GUIEventAdapter::SCROLL_DOWN )
+            mouseInput.setType( gcn::MouseInput::WheelMovedDown );
+        mouseInput.setButton( convertMouseButton(ea.getButton()) );
+        mouseInput.setTimeStamp( ea.getTime() );
+        _mouseInputQueue.push( mouseInput );
+        break;
+    case osgGA::GUIEventAdapter::KEYDOWN:
+        convertKeyValue( keyInput, ea.getKey() );
+        convertModKeyValue( keyInput, ea.getModKeyMask() );
+        keyInput.setType( gcn::KeyInput::Pressed );
+        _keyInputQueue.push( keyInput );
+        break;
+    case osgGA::GUIEventAdapter::KEYUP:
+        convertKeyValue( keyInput, ea.getKey() );
+        convertModKeyValue( keyInput, ea.getModKeyMask() );
+        keyInput.setType( gcn::KeyInput::Released );
+        _keyInputQueue.push( keyInput );
+        break;
+    case osgGA::GUIEventAdapter::FRAME:
+        if ( _guichan->isValid() )
+            _guichan->getGUIElement()->logic();
+        break;
+    default: break;
     }
 }
 
@@ -234,21 +221,20 @@ GuichanDrawable::GuichanDrawable()
     
     _graphics = new gcn::OpenGLGraphics;
     _imageLoader = new GuichanImageLoader;
-    _input = new GuichanEventInput;
+    _input = new GuichanEventInput(this);
     
     _gui = new gcn::Gui;
     _gui->setTop( _container );
     _gui->setGraphics( _graphics );
-    _gui->setInput( _input.get() );
+    _gui->setInput( _input );
     gcn::Image::setImageLoader( _imageLoader );
     
     setSupportsDisplayList( false );
-    setEventCallback( _input.get() );
     getOrCreateStateSet()->setMode( GL_LIGHTING, osg::StateAttribute::OFF );
 }
 
 GuichanDrawable::GuichanDrawable( const GuichanDrawable& copy, const osg::CopyOp& copyop )
-:   osg::Drawable(copy, copyop), _viewport(copy._viewport),
+:   osg::Drawable(copy, copyop),
     _input(copy._input), _gui(copy._gui), _container(copy._container),
     _graphics(copy._graphics), _imageLoader(copy._imageLoader),
     _activeContextID(copy._activeContextID), _initialized(copy._initialized)
@@ -257,15 +243,15 @@ GuichanDrawable::GuichanDrawable( const GuichanDrawable& copy, const osg::CopyOp
 
 GuichanDrawable::~GuichanDrawable()
 {
+    delete _input;
     delete _gui;
     delete _container;
     delete _graphics;
     delete _imageLoader;
 }
 
-void GuichanDrawable::setViewport( int x, int y, int width, int height )
+void GuichanDrawable::setContainerSize( int x, int y, int width, int height )
 {
-    _viewport = new osg::Viewport( x, y, width, height );
     _container->setDimension( gcn::Rectangle(x, y, width, height) );
     static_cast<gcn::OpenGLGraphics*>(_graphics)->setTargetPlane( width, height );
 }
@@ -293,7 +279,6 @@ void GuichanDrawable::drawImplementation( osg::RenderInfo& renderInfo ) const
         state->disableAllVertexArrays();
         state->disableTexCoordPointer( 0 );
         
-        if ( _viewport.valid() ) _viewport->apply( *state );
         glPushAttrib( GL_ALL_ATTRIB_BITS );
         _gui->draw();
         glPopAttrib();
