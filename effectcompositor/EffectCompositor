@@ -95,6 +95,9 @@ public:
     PassList& getPassList() { return _passLists[_currentTechnique]; }
     const PassList& getPassList() const;
     
+    /** Convenient method to obtain all cameras used in forward/deferred passes */
+    osg::NodeList getCameras( PassType type ) const;
+    
     /** Set a global texture/buffer object */
     bool setTexture( const std::string& name, osg::Texture* tex );
     
@@ -134,8 +137,15 @@ public:
         VIEWPORT_WIDTH,
         VIEWPORT_HEIGHT,
         WINDOW_MATRIX,
+        INV_WINDOW_MATRIX,
         FRUSTUM_NEAR_PLANE,
         FRUSTUM_FAR_PLANE,
+        SCENE_FOV_IN_RADIANS,
+        SCENE_ASPECT_RATIO,
+        SCENE_MODELVIEW_MATRIX,
+        SCENE_INV_MODELVIEW_MATRIX,
+        SCENE_PROJECTION_MATRIX,
+        SCENE_INV_PROJECTION_MATRIX
     };
     
     /** Add an inbuilt uniform for automatical updating */

@@ -1,0 +1,494 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<compositor>
+    <!--
+        Cubic Spline Based Screen Space Ambient Occlusion (SSAO)
+        Original version by Adrian Egli (2010)
+    -->
+    
+    <!-- Shaders -->
+    <shader name="getnormaldepth_vs" type="vertex">
+        <source>
+        <![CDATA[
+        uniform float farPlaneValue;
+        uniform vec3 eyePosition;
+        uniform vec3 lookDirection;
+        varying float depthValue;
+        varying vec3 normal;
+
+        void main(void)
+        {
+            vec4 v = gl_ModelViewMatrix * gl_Vertex;
+            depthValue = farPlaneValue * 2.0 - (eyePosition.z - v.z);
+            normal = normalize(gl_NormalMatrix * gl_Normal);
+            gl_Position = ftransform();
+        }
+        ]]>
+        </source>
+    </shader>
+
+    <shader name="getnormaldepth_fs" type="fragment">
+        <source>
+        <![CDATA[
+        uniform vec3 leftDirection;
+        uniform vec3 upDirection;
+        varying vec3 normal;
+        varying float depthValue;
+
+        void main()
+        {
+            float l = dot(leftDirection, normal);
+            float u = dot(upDirection, normal);
+            gl_FragColor = vec4(depthValue, l, u, step(0.9, gl_FrontMaterial.diffuse.a));
+        }
+        ]]>
+        </source>
+    </shader>
+
+    <shader name="ssao_process_vs" type="vertex">
+        <source>
+        <![CDATA[
+        void main()
+        {
+            gl_Position = ftransform();
+            gl_TexCoord[0].st = gl_Vertex.xy;
+        }
+        ]]>
+        </source>
+    </shader>
+
+    <shader name="ssao_process_fs" type="fragment">
+        <source>
+        <![CDATA[
+        uniform sampler2D depthTex;
+        uniform vec3 lookDirection;
+        uniform vec3 leftDirection;
+        uniform vec3 upDirection;
+        uniform float nearPlaneValue;
+        uniform float farPlaneValue;
+        uniform float viewportWidth;
+        uniform float viewportHeight;
+        uniform float contrastValue;
+        uniform unsigned int osg_FrameNumber;
+
+        const float subSamplingFactor = 1.0;
+        const float loopMaxPESSAO = 30.0;
+        const float contrastPESSAO = 0.2;
+        const float depthOffsetPESSAO = 0.000000001;
+        const float initRadiusInPixelPESSAO = 0.05;
+        const float constDepthCutoffPESSAO = 0.019;
+        const float depthCutoffPESSAO = 0.03;
+        const float radiusScaleStepFactorPESSAO = 1.0;
+        const float fastOffPESSAO = 0.0;
+        const float artifactsRemoveCountPESSAO = 1.0;
+        const float speedUpILoopPESSAO = 0.15;
+        const float attenuationFactorPESSAO = 0.8;
+
+        // spline with continuity C2
+        const mat4 a1_c2 = mat4(0.091652, -0.259036, 0.065835, 0.601549, 0.072391, -0.119529, -0.162458, -0.106061, -0.097676, 0.213855, 0.084768, -0.200947, -0.042421, 0.054687, 0.034006, -0.033646);
+        const mat4 a2_c2 = mat4(0.601549, 0.065835, -0.259036, 0.091652, 0.106061, 0.162458, 0.119529, -0.072391, -0.200947, 0.084768, 0.213855, -0.097676, -0.048798, 0.012121, 0.042903, -0.018852);
+        const mat4 b1_c2 = mat4(0.091652, -0.259036, 0.065835, 0.601549, 0.072391, -0.119529, -0.162458, -0.106061, -0.097676, 0.213855, 0.084768, -0.200947, 0.018852, -0.042903, -0.012121, 0.048798);
+        const mat4 b2_c2 = mat4(0.601549, 0.065835, -0.259036, 0.091652, 0.106061, 0.162458, 0.119529, -0.072391, -0.200947, 0.084768, 0.213855, -0.097676, 0.033646, -0.034006, -0.054687, 0.042421);
+
+        // spline with continuity C3
+        const mat4 a1_c3 = mat4(-0.122093, 0.081395, 0.226744, 0.313953, 0.072391, -0.119529, -0.162458, -0.106061, 0.032946, 0.005814, -0.013566, -0.025194, -0.011785, 0.005892, 0.010943, 0.007576);
+        const mat4 a2_c3 = mat4(0.313953, 0.226744, 0.081395, -0.122093, 0.106061, 0.162458, 0.119529, -0.072391, -0.025194, -0.013566, 0.005814, 0.032946, -0.007576, -0.010943, -0.005892, 0.011785);
+        const mat4 b1_c3 = mat4(-0.122093, 0.081395, 0.226744, 0.313953, 0.072391, -0.119529, -0.162458, -0.106061, 0.032946, 0.005814, -0.013566, -0.025194, -0.011785, 0.005892, 0.010943, 0.007576);
+        const mat4 b2_c3 = mat4(0.313953, 0.226744, 0.081395, -0.122093, 0.106061, 0.162458, 0.119529, -0.072391, -0.025194, -0.013566, 0.005814, 0.032946, -0.007576, -0.010943, -0.005892, 0.011785);
+
+        const vec4 QA = vec4(-4.000000, 8.000000,-21.333333, 64.000000);
+        const vec4 QB = vec4( 4.000000, 8.000000, 21.333333, 64.000000);
+
+        const float pi1 = 3.1415;
+        const float pi2 = 1.5708;
+        const float pi4 = 0.7853;
+        const float pi6 = 0.5235;
+        const float pi12= 0.2617;
+
+        float min4(in vec4 v) { float a = min(v.x, v.y), b = min(v.z, v.w); return min(a, b); }
+        float max4(in vec4 v) { float a = max(v.x, v.y), b = max(v.z, v.w); return max(a, b); }
+        float sum4(in vec4 v) { return v.x + v.y + v.z + v.w; }
+
+        float polyEval(in vec4 p, in float t) { return p.x + p.y * t + p.z * pow(t, 2.0) + p.w * pow(t, 3.0); }
+        float splineInt(in vec4 p1, in vec4 p2) { return dot(QB, p2) - dot(QA, p1); }
+        vec4 dtParam(in vec4 p) { return vec4(p.y, 2.0 * p.z, 3.0 * p.w, 0.0); }
+
+        vec4 readNormalDepth(in vec2 coord)
+        {
+           vec4 d = texture2D(depthTex, coord);
+           vec3 normal = d.y * leftDirection;
+           normal += d.z * upDirection;
+
+           float q = sqrt(1.0 - d.x * d.x + d.y * d.y);
+           normal += q * lookDirection;
+           return vec4(normalize(normal), d.x);
+        }
+
+        void main()
+        {
+            vec4 centerDepth = readNormalDepth(gl_TexCoord[0].xy);
+            if (centerDepth.w <= 0.0) return;
+
+            vec2 textureSize = vec2(viewportWidth, viewportHeight);
+            vec2 metricNearFarPlanePixelResolution = vec2(nearPlaneValue * 0.5, farPlaneValue * 2.0);
+            metricNearFarPlanePixelResolution *= 1.0 / viewportHeight;
+
+            float powContrast = pow(0.125 * contrastValue, 0.25);
+            float wFilter = 1.0 - centerDepth.w / (farPlaneValue * 2.0);
+            float offsetIdx = float(mod((
+                gl_FragCoord.x) + (gl_FragCoord.y) + ((1.0 + gl_FragCoord.x) * (1.0 + gl_FragCoord.y)), 2.0));
+
+            float prDiff = metricNearFarPlanePixelResolution.y - metricNearFarPlanePixelResolution.x;
+            float prAtPOI = metricNearFarPlanePixelResolution.x + prDiff * wFilter;
+            float prAtPOIRadius = 3.0 * radiusScaleStepFactorPESSAO / subSamplingFactor / subSamplingFactor / prAtPOI;
+            float iLoopMax = ceil(max(6.0, min(loopMaxPESSAO, prAtPOIRadius)));
+
+            float idx = 0.0, AO2Write = 0.0, AO2WriteDIV = 0.0;
+            float idxMax = artifactsRemoveCountPESSAO;
+            float subSampling = max(0.0, idxMax - 2.0) * wFilter;
+            float angle0 = offsetIdx * pi2;
+
+            while (idx < idxMax)
+            {
+                float iLoop = 0.0;
+                angle0 += pi2 + ((pi1 * max(0.0, idxMax - idx - 1.0) / (2.0 * idxMax)));
+
+                vec4 ndL1, ndL2, ndL3, ndL4, ndR1, ndR2, ndR3, ndR4;
+                vec2 v1 = initRadiusInPixelPESSAO * vec2(cos(angle0), sin(angle0)) / textureSize;
+                ndL1 = ndL2 = centerDepth;
+                ndL3 = ndL4 = readNormalDepth(gl_TexCoord[0].xy-(v1));
+                ndR1 = ndR2 = centerDepth;
+                ndR3 = ndR4 = readNormalDepth(gl_TexCoord[0].xy+(v1));
+
+                float finalAO = 0.0, finalAOCnt = 0.0;
+                float NB_maxAO = 0.0, NB_sumAO = 0.0, NB_sumAOCNT = 0.0;
+                float currentAngle1 = angle0;
+                float diffZDepthSum = 1.0, maxDiffZDepth = 0.0;
+
+                while (iLoop < iLoopMax)
+                {
+                    float sLoop = (iLoop + 1.0) / iLoopMax;
+                    float angle1 = currentAngle1 + (float(mod(iLoop, 4.0)) * pi1 * 0.25);
+                    currentAngle1 += ((pi2 * (iLoopMax - iLoop - 1.0) / (2.0 * iLoopMax)));
+
+                    /* read next depth/normal value */
+                    float radius = initRadiusInPixelPESSAO + pow(sin(pi2 * sLoop), 3.0) * prAtPOIRadius;
+                    vec2 v4 = radius * vec2(cos(angle1), sin(angle1)) / textureSize;
+                    ndL4 = readNormalDepth(gl_TexCoord[0].xy - v4);
+                    ndR4 = readNormalDepth(gl_TexCoord[0].xy + v4);
+
+                    /* spline interpolation : fit a spline into the surface (depth values) */
+                    vec4 z1 = vec4(ndL4.w, ndL3.w, ndL2.w, ndL1.w) - centerDepth.w;
+                    vec4 z2 = vec4(ndR1.w, ndR2.w, ndR3.w, ndR4.w) - centerDepth.w;
+
+                    /* solve ECLSQ : Mz = p */
+                    vec4 p1 = z1 * a1_c2 + z2 * a2_c2;
+                    vec4 p2 = z1 * b1_c2 + z2 * b2_c2;
+
+                    /* get min/max z value */
+                    float minZ = min(min4(z1), min4(z2));
+                    float maxZ = max(max4(z1), max4(z2));
+                    float diffZDepth = maxZ - minZ;
+                    diffZDepthSum += sqrt(diffZDepth);
+                    maxDiffZDepth = max(maxDiffZDepth, diffZDepth);
+
+                    /* integration : estimate the area ( positive / negative classification ) */
+                    /* transform the i0 value into AO estimation factor (AOEF) */
+                    float updateAO = clamp(
+                        splineInt(p1, p2) / (constDepthCutoffPESSAO + 8.0 * diffZDepth * depthCutoffPESSAO),
+                        0.0, 1.0);
+                    updateAO *= step(farPlaneValue * 2.0 * depthOffsetPESSAO,
+                        (max4(abs(z1 - centerDepth.w)) + max4(abs(z2 - centerDepth.w))) * 0.5);
+                    updateAO *= step(farPlaneValue * 2.0 * depthOffsetPESSAO, diffZDepth);
+
+                    float att = clamp(pow(attenuationFactorPESSAO, maxDiffZDepth), 0.0, 1.0);
+                    updateAO *= att;
+
+                    /* update finalAO */
+                    float r = 1.0 / (diffZDepthSum), k = z2.z - z1.y;
+                    k = 1.0 / (1.0 + exp(-10.0 * k));
+                    r = k * r;
+                    finalAOCnt += r;
+                    finalAO += r * (1.0 - updateAO);
+
+                    /* use normal for special effects */
+                    float NB_angleDiff = dot(ndL4.xyz, ndR4.xyz);
+                    float classifier = -dot(cross(ndL4.xyz, centerDepth.xyz), cross(centerDepth.xyz, ndR4.xyz));
+                    float NB_sel = step(centerDepth.w, ndL4.w) * step(centerDepth.w, ndR4.w);
+                    NB_maxAO = (1.0 - att * att) * min(1.0, max(NB_sel * classifier * NB_angleDiff, NB_maxAO));
+
+                    float nr = 1.0 + (1.0 - att * sLoop) * (1.0 - finalAO / finalAOCnt);
+                    NB_sumAO += nr * clamp(1.0 - NB_maxAO, 0.0, 1.0);
+                    NB_sumAOCNT += nr;
+
+                    /* update iLoop */
+                    float speedUP = max(1.0, pow(1.0 + speedUpILoopPESSAO, diffZDepthSum));
+                    iLoop += speedUP;
+                }
+
+                /* increase/decrease contrast*/
+                float NB_ao = clamp(pow((NB_sumAO / NB_sumAOCNT), 1.0 - finalAO + contrastPESSAO), 0.0, 1.0);
+                finalAO = clamp(1.0 - (1.0 - pow(finalAO / finalAOCnt, powContrast)), 0.0, 1.0);
+                finalAO = finalAO * (1.0- (1.0 - finalAO) * NB_ao);
+
+                AO2Write += abs(finalAO);
+                AO2WriteDIV += 1.0;
+                idx += max(1.0, ceil((1.0 - fastOffPESSAO) * step(0.995, AO2Write / AO2WriteDIV) * idxMax));
+            }
+
+            float aoReturn = AO2Write / AO2WriteDIV;
+            gl_FragColor = vec4(aoReturn, centerDepth.w, wFilter, 1.0);
+        }
+        ]]>
+        </source>
+    </shader>
+
+    <shader name="ssao_combine_vs" type="vertex">
+        <source>
+        <![CDATA[
+        varying vec3 normal;
+        varying vec3 localNormal;
+        varying vec3 lightVector0;
+        varying vec3 halfVector0;
+        varying vec3 lightVector1;
+        varying vec3 halfVector1;
+
+        void main(void)
+        {
+            localNormal = normalize(gl_Normal);
+            normal = normalize(gl_NormalMatrix * gl_Normal);
+            gl_FrontColor = gl_Color;
+            gl_Position = ftransform();
+            gl_TexCoord[0] = gl_MultiTexCoord0;
+            gl_TexCoord[1] = gl_MultiTexCoord1;
+
+            mat3 trans = mat3(vec3(gl_NormalMatrix[0].x, gl_NormalMatrix[1].x, gl_NormalMatrix[2].x),
+                              vec3(gl_NormalMatrix[0].y, gl_NormalMatrix[1].y, gl_NormalMatrix[2].y),
+                              vec3(gl_NormalMatrix[0].z, gl_NormalMatrix[1].z, gl_NormalMatrix[2].z));
+            vec3 tangent = normalize(gl_NormalMatrix * trans[0]);
+            vec3 binormal = normalize(gl_NormalMatrix * trans[1]);
+            vec3 vertexInEye = vec3(gl_ModelViewMatrix * gl_Vertex);
+
+            vec3 tmpVec = gl_LightSource[0].position.xyz - vertexInEye;
+            lightVector0.x = dot(tmpVec, tangent);
+            lightVector0.y = dot(tmpVec, binormal);
+            lightVector0.z = dot(tmpVec, normal);
+            halfVector0 = reflect(-tmpVec, gl_Normal);
+            halfVector0.x = dot(tmpVec, tangent);
+            halfVector0.y = dot(tmpVec, binormal);
+            halfVector0.z = dot(tmpVec, normal);
+
+            tmpVec = gl_LightSource[1].position.xyz - vertexInEye;
+            lightVector1.x = dot(tmpVec, tangent);
+            lightVector1.y = dot(tmpVec, binormal);
+            lightVector1.z = dot(tmpVec, normal);
+            halfVector1 = reflect(-tmpVec, gl_Normal);
+            halfVector1.x = dot(tmpVec, tangent);
+            halfVector1.y = dot(tmpVec, binormal);
+            halfVector1.z = dot(tmpVec, normal);
+        }
+        ]]>
+        </source>
+    </shader>
+
+    <shader name="ssao_combine_fs" type="fragment">
+        <source>
+        <![CDATA[
+        uniform sampler2D aoTex;
+        uniform sampler2D sceneTex;
+        uniform vec3 lightDirUniform;
+        uniform float colorBlendFactor;
+        uniform float viewportWidth;
+        uniform float viewportHeight;
+
+        varying vec3 normal;
+        varying vec3 localNormal;
+        varying vec3 lightVector0;
+        varying vec3 halfVector0;
+        varying vec3 lightVector1;
+        varying vec3 halfVector1;
+
+        const float subSamplingFactor = 1.0;
+        const float artifactsRemoveCountPESSAO = 1.0;
+        const float strength = 1.0;
+
+        float min4(in vec4 v) { float a = min(v.x, v.y), b = min(v.z, v.w); return min(a, b); }
+        float max4(in vec4 v) { float a = max(v.x, v.y), b = max(v.z, v.w); return max(a, b); }
+        float sum4(in vec4 v) { return v.x + v.y + v.z + v.w; }
+
+        void main()
+        {
+            vec2 textureSize = vec2(viewportWidth, viewportHeight);
+            vec2 aoTexFactor = vec2(1.0) / textureSize / subSamplingFactor;
+            vec2 aoTexCoord = gl_FragCoord.xy * aoTexFactor;
+            vec2 texCoord0 = gl_TexCoord[0].st;
+            vec2 texCoord1 = gl_TexCoord[1].st;
+            vec4 shadow = vec4(1.0);  //TODO: texture2D(shadowedScene, aoTexCoord);
+
+            vec4 poiSSAO = texture2D(aoTex, aoTexCoord);
+            float ssao = poiSSAO.x;
+            vec4 ssao4;
+
+            float off = max(0.0, 1.0 - (artifactsRemoveCountPESSAO - 1.0) * 0.5)
+                               * (0.25 + 0.75 * pow(1.0 - poiSSAO.z, 3.0));
+            ssao4.x  = texture2D(aoTex, vec2((gl_FragCoord.x - off) / textureSize.x,
+                                             (gl_FragCoord.y + off) / textureSize.y) / subSamplingFactor).x;
+            ssao4.y  = texture2D(aoTex, vec2((gl_FragCoord.x - off) / textureSize.x,
+                                             (gl_FragCoord.y - off) / textureSize.y) / subSamplingFactor).x;
+            ssao4.z  = texture2D(aoTex, vec2((gl_FragCoord.x + off) / textureSize.x,
+                                             (gl_FragCoord.y - off) / textureSize.y) / subSamplingFactor).x;
+            ssao4.w  = texture2D(aoTex, vec2((gl_FragCoord.x + off) / textureSize.x,
+                                             (gl_FragCoord.y + off) / textureSize.y) / subSamplingFactor).x;
+            ssao = sum4(ssao4) + 2.0 * ssao - max(ssao, max4(ssao4)) - min(ssao, min4(ssao4));
+            ssao *= 0.25;
+
+            vec3 vVDir = normalize(-lightDirUniform);
+            vec3 vNDir = normalize(localNormal);
+            float rho = 0.5 * (1.0 + dot(vNDir, vVDir));
+            float phi = ssao;
+            vec2 vLight = shadow.xy * vec2(rho, phi);
+
+            vec4 color0 = texture2D(sceneTex, texCoord0);
+            vec4 color1 = vec4(1.0);  // TODO: texture2D(sceneTex2, texCoord1);
+            vec4 lightColor = vec4(1.0);  // TODO: texture2D(lightTex, vLight);
+            vec4 light = clamp(ssao * lightColor, 0.0, 1.0);
+
+            vec3 n = normalize(normal);
+            vec3 l0 = normalize(lightVector0);
+            vec3 h0 = normalize(halfVector0);
+            float nDotL = max(0.0, dot(n, l0));
+            float nDotH = max(0.0, dot(n, h0));
+            float power = (nDotL == 0.0) ? 0.0 : pow(nDotH, gl_FrontMaterial.shininess);
+
+            vec4 ambient = gl_FrontLightProduct[0].ambient * ssao * shadow.r;
+            vec4 diffuse = gl_FrontLightProduct[0].diffuse * gl_FrontMaterial.diffuse * nDotL * shadow.r;
+            vec4 specular = gl_FrontLightProduct[0].specular * gl_FrontMaterial.specular * power * strength;
+            vec4 color = clamp(gl_FrontLightModelProduct.sceneColor  + ambient + diffuse + specular, 0.0, 1.0);
+
+            vec3 l1 = normalize(lightVector1);
+            vec3 h1 = normalize(halfVector1);
+            nDotL = max(0.0, dot(n, l1));
+            nDotH = max(0.0, dot(n, h1));
+            power = (nDotL == 0.0) ? 0.0 : pow(nDotH, gl_FrontMaterial.shininess);
+            ambient  = gl_FrontLightProduct[1].ambient * ssao * shadow.r;
+            diffuse  = gl_FrontLightProduct[1].diffuse * gl_FrontMaterial.diffuse * nDotL * shadow.r;
+            specular = gl_FrontLightProduct[1].specular * gl_FrontMaterial.specular * power * strength;
+            color += clamp(ambient + diffuse + specular, 0.0, 1.0);
+            color += gl_FrontLightModelProduct.sceneColor;
+
+            vec4 summaryColor = clamp(1.25 * (color * color0 * color1 * ssao), 0.0, 1.0);
+            color = (1.0-colorBlendFactor)+colorBlendFactor*summaryColor;
+
+            gl_FragColor.rgb = color.rgb * ssao;
+            if (colorBlendFactor > 1.01)
+            {
+                float ao2 = 1.1 - (colorBlendFactor - 1.0);
+                color = (1.0 - ao2) + ao2 * summaryColor;
+                if (colorBlendFactor < 1.2) gl_FragColor.rgb = color.rgb;
+                else if (aoTexCoord.x > 0.66) gl_FragColor.rgb = vec3(ssao, ssao, ssao);
+                else if (aoTexCoord.x > 0.33) gl_FragColor.rgb = color.rgb;
+                else if (aoTexCoord.x < 0.33) gl_FragColor.rgb = color.rgb / vec3(ssao, ssao, ssao);
+            }
+            gl_FragColor = shadow * gl_FragColor;
+            gl_FragColor.a = summaryColor.a;
+        }
+        ]]>
+        </source>
+    </shader>
+
+    <!-- Uniforms -->
+    <uniform name="lightDirUniform" type="vec3">
+        <value>0.2 0.2 0.5</value>
+    </uniform>
+    
+    <uniform name="contrastValue" type="float">
+        <value>16.0</value>
+    </uniform>
+    
+    <uniform name="colorBlendFactor" type="float">
+        <value>0.8</value>
+    </uniform>
+
+    <uniform name="nearPlaneValue" type="float"><inbuilt_value>near_plane</inbuilt_value></uniform>
+    <uniform name="farPlaneValue" type="float"><inbuilt_value>far_plane</inbuilt_value></uniform>
+    <uniform name="viewportWidth" type="float"><inbuilt_value>viewport_width</inbuilt_value></uniform>
+    <uniform name="viewportHeight" type="float"><inbuilt_value>viewport_height</inbuilt_value></uniform>
+    <uniform name="eyePosition" type="vec3"><inbuilt_value>eye_position</inbuilt_value></uniform>
+    <uniform name="lookDirection" type="vec3"><inbuilt_value>look_vector</inbuilt_value></uniform>
+    <uniform name="leftDirection" type="vec3"><inbuilt_value>left_vector</inbuilt_value></uniform>
+    <uniform name="upDirection" type="vec3"><inbuilt_value>up_vector</inbuilt_value></uniform>
+
+    <!-- Buffer and textures -->
+    <buffer name="originalScene" type="2d" width="1024" height="1024">
+        <internal_format>rgba</internal_format>
+        <source_format>rgba</source_format>
+        <source_type>ubyte</source_type>
+        <wrap param="s">clamp</wrap>
+        <wrap param="t">clamp</wrap>
+        <filter param="min_filter">linear</filter>
+        <filter param="mag_filter">linear</filter>
+    </buffer>
+
+    <buffer name="normalDepthScene" type="2d" width="1024" height="1024">
+        <internal_format>rgba32f</internal_format>
+        <source_format>rgba</source_format>
+        <source_type>float</source_type>
+        <wrap param="s">clamp_to_border</wrap>
+        <wrap param="t">clamp_to_border</wrap>
+        <filter param="min_filter">nearest</filter>
+        <filter param="mag_filter">nearest</filter>
+    </buffer>
+
+    <buffer name="aoScene" type="2d" width="1024" height="1024">
+        <internal_format>rgba32f</internal_format>
+        <source_format>rgba</source_format>
+        <source_type>float</source_type>
+        <wrap param="s">clamp</wrap>
+        <wrap param="t">clamp</wrap>
+        <filter param="min_filter">linear</filter>
+        <filter param="mag_filter">linear</filter>
+    </buffer>
+
+    <!-- Techniques -->
+    <technique>
+        <forward_pass name="SSAO_OriginalScene">
+            <clear_color>0 0 0 1</clear_color>
+            <output_buffer target="color">originalScene</output_buffer>
+        </forward_pass>
+
+        <forward_pass name="SSAO_NormalDepth">
+            <uniform>nearPlaneValue</uniform>
+            <uniform>farPlaneValue</uniform>
+            <uniform>eyePosition</uniform>
+            <uniform>leftDirection</uniform>
+            <uniform>upDirection</uniform>
+            <output_buffer target="color">normalDepthScene</output_buffer>
+            <shader>getnormaldepth_vs</shader>
+            <shader>getnormaldepth_fs</shader>
+        </forward_pass>
+
+        <deferred_pass name="SSAO_Processing">
+            <uniform>nearPlaneValue</uniform>
+            <uniform>farPlaneValue</uniform>
+            <uniform>leftDirection</uniform>
+            <uniform>upDirection</uniform>
+            <uniform>viewportWidth</uniform>
+            <uniform>viewportHeight</uniform>
+            <uniform>contrastValue</uniform>
+            <input_buffer unit="0" varname="depthTex">normalDepthScene</input_buffer>
+            <output_buffer target="color">aoScene</output_buffer>
+            <shader>ssao_process_vs</shader>
+            <shader>ssao_process_fs</shader>
+        </deferred_pass>
+
+        <deferred_pass name="SSAO_Combining">
+            <uniform>viewportWidth</uniform>
+            <uniform>viewportHeight</uniform>
+            <uniform>lightDirUniform</uniform>
+            <uniform>colorBlendFactor</uniform>
+            <input_buffer unit="0" varname="sceneTex">originalScene</input_buffer>
+            <input_buffer unit="1" varname="aoTex">aoScene</input_buffer>
+            <shader>ssao_combine_vs</shader>
+            <shader>ssao_combine_fs</shader>
+        </deferred_pass>
+    </technique>
+</compositor>

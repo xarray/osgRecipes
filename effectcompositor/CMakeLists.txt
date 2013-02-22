@@ -52,6 +52,7 @@ ENDMACRO(START_EXAMPLE)
 SET(EXAMPLE_NAME osgeffectcompositor)
 SET(EXAMPLE_FILES
     osgeffectcompositor.cpp
+    SkyBox.cpp
     EffectAnalysisHelper.cpp
     EffectCompositor.cpp
     EffectCompositorXML.cpp
@@ -59,6 +60,11 @@ SET(EXAMPLE_FILES
 
 FIND_PATH(SILVERLINING_INCLUDE_DIR SilverLining.h)
 FIND_LIBRARY(SILVERLINING_LIBRARY NAMES SilverLining-MT-DLL)
+
+OPTION(USE_SILVERLINING "Use SilverLining for sky/cloud rendering" OFF)
+IF(USE_SILVERLINING)
+    ADD_DEFINITIONS(-DUSE_SILVERLINING)
+ENDIF(USE_SILVERLINING)
 
 IF(SILVERLINING_INCLUDE_DIR AND SILVERLINING_LIBRARY)
     

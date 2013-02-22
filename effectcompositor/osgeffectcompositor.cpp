@@ -16,12 +16,13 @@
 #include <osgViewer/ViewerEventHandlers>
 #include <osgViewer/Viewer>
 
+#include "SkyBox"
 #include "EffectCompositor"
 
 extern void configureViewerForMode( osgViewer::Viewer& viewer, osgFX::EffectCompositor* compositor,
                                     osg::Node* model, int displayMode );
 
-#ifdef HAVE_SILVERLINING
+#if defined(USE_SILVERLINING) && defined(HAVE_SILVERLINING)
 
 /* The SilverLining skybox */
 #include "SilverLiningNode.h"
@@ -66,16 +67,27 @@ public:
     }
 };
 
-osg::Node* createSkyBox()
+osg::Node* createSkyBox( float radius )
 {
     return new MySilverLiningNode( "Your user name", "Your license code" );
 }
 
 #else
 
-osg::Node* createSkyBox()
+osg::Node* createSkyBox( float radius )
 {
-    return new osg::Node;
+    osg::ref_ptr<osg::Geode> geode = new osg::Geode;
+    geode->addDrawable( new osg::ShapeDrawable( new osg::Sphere(osg::Vec3(), radius)) );
+    geode->setCullingActive( false );
+    
+    osg::ref_ptr<SkyBox> skybox = new SkyBox;
+    skybox->getOrCreateStateSet()->setTextureAttributeAndModes( 0, new osg::TexGen );
+    skybox->setEnvironmentMap( 0,
+        osgDB::readImageFile("Cubemap_snow/posx.jpg"), osgDB::readImageFile("Cubemap_snow/negx.jpg"),
+        osgDB::readImageFile("Cubemap_snow/posy.jpg"), osgDB::readImageFile("Cubemap_snow/negy.jpg"),
+        osgDB::readImageFile("Cubemap_snow/posz.jpg"), osgDB::readImageFile("Cubemap_snow/negz.jpg") );
+    skybox->addChild( geode.get() );
+    return skybox.release();
 }
 
 #endif
@@ -127,7 +139,8 @@ int main( int argc, char** argv )
     std::string effectFile("test.xml");
     arguments.read( "--effect", effectFile );
     
-    bool shadowed = false;
+    bool useSkyBox = false, shadowed = false;
+    if ( arguments.read("--skybox") ) useSkyBox = true;
     if ( arguments.read("--shadowed") ) shadowed = true;
     
     float lodscale = 1.0f;
@@ -141,7 +154,7 @@ int main( int argc, char** argv )
     if ( !model ) model = osgDB::readNodeFile( "lz.osg" );
     
     osg::ref_ptr<osg::Group> scene = new osg::Group;
-    scene->addChild( createSkyBox() );
+    if ( useSkyBox ) scene->addChild( createSkyBox( model->getBound().radius() ) );
     scene->addChild( shadowed ? createShadowedScene(model) : model );
     
     // Create the effect compositor from XML file

@@ -42,8 +42,8 @@
     
     <texture name="smaaAreaTex" type="2d">
         <rawfile s="160" t="560">smaa/smaa_area.raw</rawfile>
-        <internal_format>2</internal_format>
-        <source_format>luminance_alpha</source_format>
+        <internal_format>rg</internal_format>
+        <source_format>rg</source_format>
         <source_type>ubyte</source_type>
         <filter param="min_filter">linear</filter>
         <filter param="mag_filter">linear</filter>
@@ -53,8 +53,8 @@
     
     <texture name="smaaSearchTex" type="2d">
         <rawfile s="66" t="33">smaa/smaa_search.raw</rawfile>
-        <internal_format>1</internal_format>
-        <source_format>luminance</source_format>
+        <internal_format>red</internal_format>
+        <source_format>red</source_format>
         <source_type>ubyte</source_type>
         <filter param="min_filter">nearest</filter>
         <filter param="mag_filter">nearest</filter>

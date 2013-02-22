@@ -28,17 +28,18 @@ public:
         
         if ( nv->getVisitorType()==osg::NodeVisitor::CULL_VISITOR )
         {
+            osgUtil::CullVisitor* cv = static_cast<osgUtil::CullVisitor*>(nv);
             if ( _type==EffectCompositor::FORWARD_PASS )
             {
+                // Forward pass will traverse the scene normally
                 _compositor->osg::Group::traverse( *nv );
                 
                 // We obtain the actual near/far values at the end of forward pass traversing
-                osgUtil::CullVisitor* cv = static_cast<osgUtil::CullVisitor*>(nv);
                 _compositor->setPreservedNearAndFar( cv->getCalculatedNearPlane(), cv->getCalculatedFarPlane() );
             }
-            else if ( camera->getNumChildren()>0 )
-                camera->traverse( *nv );  // Use camera's own children as display surface
-            else
+            else if ( camera->getNumChildren()>0 )  // Use camera's own children as display surface
+                camera->traverse( *nv );
+            else                                    // Render to a fullscreen quad
                 _compositor->getOrCreateQuad()->accept( *nv );
         }
         else
@@ -103,12 +104,15 @@ EffectCompositor::EffectCompositor( const EffectCompositor& copy, const osg::Cop
 osg::Camera* EffectCompositor::createNewPass( PassType type, const std::string& name )
 {
     osg::ref_ptr<osg::Camera> camera = new osg::Camera;
+    camera->setName( name );
     camera->setClearMask( GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT );
     camera->setRenderOrder( osg::Camera::PRE_RENDER );
     camera->setRenderTargetImplementation( _renderTargetImpl );
     camera->setCullCallback( new PassCullCallback(this, type) );
+    
     if ( type==DEFERRED_PASS )
     {
+        // Deferred pass is absolutely facing the XOY plane in the range of [0, 1]
         camera->setAllowEventFocus( false );
         camera->setReferenceFrame( osg::Transform::ABSOLUTE_RF );
         camera->setProjectionMatrix( osg::Matrix::ortho2D(0.0, 1.0, 0.0, 1.0) );
@@ -116,6 +120,7 @@ osg::Camera* EffectCompositor::createNewPass( PassType type, const std::string& 
     }
     else
     {
+        // Forward pass will follow the scene navigation result
         camera->setReferenceFrame( osg::Transform::RELATIVE_RF );
     }
     
@@ -235,6 +240,18 @@ const EffectCompositor::PassList& EffectCompositor::getPassList() const
         return s_emptyPassList;
     }
     return itr->second;
+}
+
+osg::NodeList EffectCompositor::getCameras( EffectCompositor::PassType type ) const
+{
+    osg::NodeList cameras;
+    const PassList& passList = getPassList();
+    for ( unsigned int i=0; i<passList.size(); ++i )
+    {
+        if ( passList[i].type==type )
+            cameras.push_back( passList[i].pass );
+    }
+    return cameras;
 }
 
 bool EffectCompositor::setTexture( const std::string& name, osg::Texture* tex )
@@ -417,9 +434,11 @@ void EffectCompositor::traverse( osg::NodeVisitor& nv )
         if ( _inbuiltUniforms.size()>0 )
         {
             osgUtil::CullVisitor* cv = static_cast<osgUtil::CullVisitor*>( &nv );
-            double fovy = 0.0, aspectRatio = 0.0, zNear = _preservedZNear, zFar = _preservedZFar;
-            if ( _preservedZNear==FLT_MAX && cv->getProjectionMatrix() )
+            double fovy = 0.0, aspectRatio = 0.0, zNear = 0.0, zFar = 0.0;
+            if ( cv->getProjectionMatrix() )
                 cv->getProjectionMatrix()->getPerspective( fovy, aspectRatio, zNear, zFar );
+            if ( _preservedZNear!=FLT_MAX ) zNear = _preservedZNear;
+            if ( _preservedZFar!=FLT_MAX ) zFar = _preservedZFar;
             
             for ( InbuiltUniformList::const_iterator itr=_inbuiltUniforms.begin();
                   itr!=_inbuiltUniforms.end(); ++itr )
@@ -457,16 +476,38 @@ void EffectCompositor::traverse( osg::NodeVisitor& nv )
                 case WINDOW_MATRIX:
                     itr->second->set( osg::Matrixf(cv->getWindowMatrix()) );
                     break;
+                case INV_WINDOW_MATRIX:
+                    itr->second->set( osg::Matrixf::inverse(cv->getWindowMatrix()) );
+                    break;
                 case FRUSTUM_NEAR_PLANE:
                     itr->second->set( (float)zNear );
                     break;
                 case FRUSTUM_FAR_PLANE:
                     itr->second->set( (float)zFar );
                     break;
+                case SCENE_FOV_IN_RADIANS:
+                    itr->second->set( (float)osg::DegreesToRadians(fovy) );
+                    break;
+                case SCENE_ASPECT_RATIO:
+                    itr->second->set( (float)aspectRatio );
+                    break;
+                case SCENE_MODELVIEW_MATRIX:
+                    if ( cv->getModelViewMatrix() ) itr->second->set( osg::Matrixf(*cv->getModelViewMatrix()) );
+                    break;
+                case SCENE_INV_MODELVIEW_MATRIX:
+                    if ( cv->getModelViewMatrix() ) itr->second->set( osg::Matrixf::inverse(*cv->getModelViewMatrix()) );
+                    break;
+                case SCENE_PROJECTION_MATRIX:
+                    if ( cv->getProjectionMatrix() ) itr->second->set( osg::Matrixf(*cv->getProjectionMatrix()) );
+                    break;
+                case SCENE_INV_PROJECTION_MATRIX:
+                    if ( cv->getProjectionMatrix() ) itr->second->set( osg::Matrixf::inverse(*cv->getProjectionMatrix()) );
+                    break;
                 default: break;
                 }
             }
         }
+        
         traverseAllPasses( nv );
         return;  // don't traverse as usual
     }

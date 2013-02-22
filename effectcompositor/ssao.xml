@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <compositor>
+    <!--
+        Classic Screen Space Ambient Occlusion (SSAO)
+        Original version by Adrian Egli (2010)
+    -->
+    
     <shader name="getdepth_vs" type="vertex">
         <source>
         <![CDATA[

@@ -10,6 +10,8 @@
 #include <osg/TextureCubeMap>
 #include <osg/View>
 #include <osgDB/ReadFile>
+#include <osgDB/FileUtils>
+#include <osgDB/FileNameUtils>
 #include <iostream>
 #include <sstream>
 #include "EffectCompositor"
@@ -122,7 +124,9 @@ osg::Camera* EffectCompositor::createPassFromXML( osgDB::XmlNode* xmlNode )
     
     osg::Camera* camera = createNewPass( passType, name );
     osg::StateSet* stateset = camera->getOrCreateStateSet();
+    
     osg::ref_ptr<osg::Program> program = new osg::Program;
+    program->setName( name );
     
     unsigned int numAttached = 0;
     for ( unsigned int i=0; i<xmlNode->children.size(); ++i )
@@ -254,9 +258,7 @@ osg::Camera* EffectCompositor::createPassFromXML( osgDB::XmlNode* xmlNode )
         else if ( childName=="render_config" )
         {
             int order = atoi( xmlChild->properties["order"].c_str() );
-            int nested = atoi( xmlChild->properties["nested"].c_str() );
-            if ( nested!=0 ) camera->setRenderOrder( osg::Camera::NESTED_RENDER, order );
-            else camera->setRenderOrder( osg::Camera::PRE_RENDER, order );
+            camera->setRenderOrder( osg::Camera::PRE_RENDER, order );
             
             std::string target = xmlChild->properties["target_method"];
             if ( target=="frame_buffer" ) camera->setRenderTargetImplementation( osg::Camera::FRAME_BUFFER );
@@ -299,12 +301,12 @@ osg::Camera* EffectCompositor::createPassFromXML( osgDB::XmlNode* xmlNode )
         stateset->setAttributeAndModes( program.get() );
     if ( !numAttached )
     {
-        // Automatically treat camera without outputs as the final one and render it as an HUD
-        // Note that FBO should be changed back to FRAME_BUFFER for handling camera resizing
+        // Automatically treat cameras without outputs as nested ones in the normal scene
         camera->setClearMask( 0 );
+        camera->setRenderOrder( osg::Camera::NESTED_RENDER );
+        
+        // Note that FBO should be changed back to FRAME_BUFFER for handling camera resizing
         camera->setRenderTargetImplementation( osg::Camera::FRAME_BUFFER );
-        if ( camera->getRenderOrder()!=osg::Camera::NESTED_RENDER )
-            camera->setRenderOrder( osg::Camera::POST_RENDER );
     }
     return camera;
 }
@@ -422,6 +424,11 @@ osg::Texture* EffectCompositor::createTextureFromXML( osgDB::XmlNode* xmlNode, b
             
             std::string index = xmlChild->properties["index"];
             texture->setImage( atoi(index.c_str()), image );
+            if ( !image )
+            {
+                OSG_NOTICE << "EffectCompositor: <texture> failed to load <file>: "
+                           << xmlChild->getTrimmedContents() << std::endl;
+            }
             
             std::string animated = xmlChild->properties["animated"];
             if ( atoi(animated.c_str())>0 )
@@ -437,17 +444,22 @@ osg::Texture* EffectCompositor::createTextureFromXML( osgDB::XmlNode* xmlNode, b
             h = atoi( xmlChild->properties["t"].c_str() );
             d = atoi( xmlChild->properties["r"].c_str() );
             
-            std::string rawfile = xmlChild->getTrimmedContents();
-            std::ifstream ifs( rawfile.c_str(), std::ifstream::in|std::ifstream::binary|std::ios_base::ate );
+            std::string rawfile = osgDB::findDataFile( xmlChild->getTrimmedContents() );
+            std::ifstream ifs( rawfile.c_str(), std::ios::in|std::ios::binary|std::ios::ate );
             if ( ifs )
             {
                 int length = (int)ifs.tellg() - offset;
-                ifs.seekg( offset, std::ios_base::beg );
+                ifs.seekg( offset, std::ios::beg );
                 ifs.clear();
                 
                 imageData = new unsigned char[length];
                 ifs.read( (char*)imageData, length );
                 ifs.close();
+            }
+            else
+            {
+                OSG_NOTICE << "EffectCompositor: <texture> failed to load <rawfile>: "
+                           << rawfile << std::endl;
             }
         }
         else if ( childName=="wrap" )
@@ -482,17 +494,27 @@ osg::Texture* EffectCompositor::createTextureFromXML( osgDB::XmlNode* xmlNode, b
         {
             std::string format = xmlChild->getTrimmedContents();
             if ( format=="rgb" ) texture->setInternalFormat( GL_RGB );
-            else if ( format=="bgr" ) texture->setInternalFormat( GL_BGR );
             else if ( format=="rgba" ) texture->setInternalFormat( GL_RGBA );
-            else if ( format=="bgra" ) texture->setInternalFormat( GL_BGRA );
+            else if ( format=="red" ) texture->setInternalFormat( GL_RED );
+            else if ( format=="rg" ) texture->setInternalFormat( GL_RG );
             else if ( format=="rgb16f" ) texture->setInternalFormat( GL_RGB16F_ARB );
             else if ( format=="rgb32f" ) texture->setInternalFormat( GL_RGB32F_ARB );
             else if ( format=="rgba16f" ) texture->setInternalFormat( GL_RGBA16F_ARB );
             else if ( format=="rgba32f" ) texture->setInternalFormat( GL_RGBA32F_ARB );
+            else if ( format=="red16f" ) texture->setInternalFormat( GL_R16F );
+            else if ( format=="red32f" ) texture->setInternalFormat( GL_R32F );
+            else if ( format=="rg16f" ) texture->setInternalFormat( GL_RG16F );
+            else if ( format=="rg32f" ) texture->setInternalFormat( GL_RG32F );
             else if ( format=="depth16" ) texture->setInternalFormat( GL_DEPTH_COMPONENT16 );
             else if ( format=="depth24" ) texture->setInternalFormat( GL_DEPTH_COMPONENT24 );
             else if ( format=="depth32" ) texture->setInternalFormat( GL_DEPTH_COMPONENT32 );
-            else texture->setInternalFormat( atoi(format.c_str()) );
+            else if ( format=="depth24_stencil8" ) texture->setInternalFormat( GL_DEPTH24_STENCIL8_EXT );
+            else
+            {
+                texture->setInternalFormat( atoi(format.c_str()) );
+                OSG_NOTICE << "EffectCompositor: <texture> try to use internal format: "
+                           << std::hex << atoi(format.c_str()) << std::dec << std::endl;
+            }
             
             std::string compression = xmlChild->properties["compression"];
             if ( !compression.empty() )
@@ -513,13 +535,20 @@ osg::Texture* EffectCompositor::createTextureFromXML( osgDB::XmlNode* xmlNode, b
         else if ( childName=="source_format" )
         {
             std::string format = xmlChild->getTrimmedContents();
-            if ( format=="alpha" ) texture->setSourceFormat( GL_ALPHA );
-            else if ( format=="luminance" ) texture->setSourceFormat( GL_LUMINANCE );
-            else if ( format=="luminance_alpha" ) texture->setSourceFormat( GL_LUMINANCE_ALPHA );
+            if ( format=="red" ) texture->setSourceFormat( GL_RED );
+            else if ( format=="rg" ) texture->setSourceFormat( GL_RG );
             else if ( format=="rgb" ) texture->setSourceFormat( GL_RGB );
+            else if ( format=="bgr" ) texture->setSourceFormat( GL_BGR );
             else if ( format=="rgba" ) texture->setSourceFormat( GL_RGBA );
+            else if ( format=="bgra" ) texture->setSourceFormat( GL_BGRA );
             else if ( format=="depth" ) texture->setSourceFormat( GL_DEPTH_COMPONENT );
-            else texture->setSourceFormat( atoi(format.c_str()) );
+            else if ( format=="depth_stencil" ) texture->setSourceFormat( GL_DEPTH_STENCIL_EXT );
+            else
+            {
+                texture->setSourceFormat( atoi(format.c_str()) );
+                OSG_NOTICE << "EffectCompositor: <texture> try to use source format: "
+                           << std::hex << atoi(format.c_str()) << std::dec << std::endl;
+            }
         }
         else if ( childName=="source_type" )
         {
@@ -530,9 +559,15 @@ osg::Texture* EffectCompositor::createTextureFromXML( osgDB::XmlNode* xmlNode, b
             else if ( dataType=="ushort" ) texture->setSourceType( GL_UNSIGNED_SHORT );
             else if ( dataType=="int" ) texture->setSourceType( GL_INT );
             else if ( dataType=="uint" ) texture->setSourceType( GL_UNSIGNED_INT );
+            else if ( dataType=="uint_24_8" ) texture->setSourceType( GL_UNSIGNED_INT_24_8_EXT );
             else if ( dataType=="float" ) texture->setSourceType( GL_FLOAT );
             else if ( dataType=="double" ) texture->setSourceType( GL_DOUBLE );
-            else texture->setSourceType( atoi(dataType.c_str()) );
+            else
+            {
+                texture->setSourceType( atoi(dataType.c_str()) );
+                OSG_NOTICE << "EffectCompositor: <texture> try to use data type: "
+                           << std::hex << atoi(dataType.c_str()) << std::dec << std::endl;
+            }
         }
         else
             OSG_NOTICE << "EffectCompositor: <texture> doesn't recognize child element " << xmlChild->name << std::endl;
@@ -635,10 +670,21 @@ osg::Uniform* EffectCompositor::createUniformFromXML( osgDB::XmlNode* xmlNode, b
             else if ( valueName=="viewport_width" ) addInbuiltUniform( VIEWPORT_WIDTH, uniform );
             else if ( valueName=="viewport_height" ) addInbuiltUniform( VIEWPORT_HEIGHT, uniform );
             else if ( valueName=="window_matrix" ) addInbuiltUniform( WINDOW_MATRIX, uniform );
+            else if ( valueName=="inv_window_matrix" ) addInbuiltUniform( INV_WINDOW_MATRIX, uniform );
             else if ( valueName=="near_plane" ) addInbuiltUniform( FRUSTUM_NEAR_PLANE, uniform );
             else if ( valueName=="far_plane" ) addInbuiltUniform( FRUSTUM_FAR_PLANE, uniform );
-            else  // TODO: what inbuilt value should be defined here?
+            
+            // These are defined for obtaining main scene matrices in deferred passes
+            else if ( valueName=="fov" ) addInbuiltUniform( SCENE_FOV_IN_RADIANS, uniform );
+            else if ( valueName=="aspect_ratio" ) addInbuiltUniform( SCENE_ASPECT_RATIO, uniform );
+            else if ( valueName=="modelview_matrix" ) addInbuiltUniform( SCENE_MODELVIEW_MATRIX, uniform );
+            else if ( valueName=="inv_modelview_matrix" ) addInbuiltUniform( SCENE_INV_MODELVIEW_MATRIX, uniform );
+            else if ( valueName=="projection_matrix" ) addInbuiltUniform( SCENE_PROJECTION_MATRIX, uniform );
+            else if ( valueName=="inv_projection_matrix" ) addInbuiltUniform( SCENE_INV_PROJECTION_MATRIX, uniform );
+            else
+            {
                 OSG_NOTICE << "EffectCompositor: <inbuilt_value> of " << name << " doesn't have a recognizable value: " << valueName << std::endl;
+            }
         }
         else if ( childName=="animation" )
         {
@@ -716,6 +762,7 @@ osg::Shader* EffectCompositor::createShaderFromXML( osgDB::XmlNode* xmlNode, boo
     else if ( type=="tess_control" ) shader = new osg::Shader(osg::Shader::TESSCONTROL);
     else if ( type=="tess_evaluation" ) shader = new osg::Shader(osg::Shader::TESSEVALUATION);
     else shader = new osg::Shader;
+    shader->setName( name );
     
     for ( unsigned int i=0; i<xmlNode->children.size(); ++i )
     {
@@ -739,7 +786,16 @@ osg::Shader* EffectCompositor::createShaderFromXML( osgDB::XmlNode* xmlNode, boo
             }
         }
         else if ( childName=="file" )
-            shader->loadShaderSourceFromFile( xmlChild->getTrimmedContents() );
+        {
+            std::string shaderFile = osgDB::findDataFile( xmlChild->getTrimmedContents() );
+            if ( shaderFile.empty() )
+            {
+                OSG_NOTICE << "EffectCompositor: <shader> failed to load <file>: "
+                           << xmlChild->getTrimmedContents() << std::endl;
+            }
+            else
+                shader->loadShaderSourceFromFile( shaderFile );
+        }
         else
             OSG_NOTICE << "EffectCompositor: <shader> doesn't recognize child element " << xmlChild->name << std::endl;
     }
@@ -838,9 +894,14 @@ EffectCompositor* osgFX::readEffectFile( const std::string& filename, const osgD
     osg::ref_ptr<osgDB::XmlNode> xmlRoot = osgDB::readXmlFile( filename, options );
     if ( xmlRoot.valid() )
     {
+        osgDB::FilePathList& filePaths = osgDB::getDataFilePathList();
+        filePaths.push_back( osgDB::getFilePath(filename) );
+        
         osg::ref_ptr<EffectCompositor> compositor = new EffectCompositor;
         EffectCompositor::XmlTemplateMap templateMap;
         compositor->loadFromXML( xmlRoot.get(), templateMap, options );
+        
+        filePaths.pop_back();
         return compositor.release();
     }
     return NULL;
