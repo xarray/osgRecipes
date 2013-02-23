@@ -130,6 +130,7 @@ osg::Group* createShadowedScene( osg::Node* scene )
 int main( int argc, char** argv )
 {
     osg::ArgumentParser arguments( &argc, argv );
+    osgViewer::Viewer viewer;
     
     int displayMode = 1;
     if ( arguments.read("--simple-mode") ) displayMode = 0;
@@ -158,28 +159,12 @@ int main( int argc, char** argv )
     scene->addChild( shadowed ? createShadowedScene(model) : model );
     
     // Create the effect compositor from XML file
-#ifdef HAVE_SILVERLINING
-    osg::ref_ptr<osgDB::XmlNode> xmlRoot = osgDB::readXmlFile( effectFile );
-    if ( !xmlRoot )
-    {
-        OSG_WARN << "Effect file " << effectFile << " can't be loaded!" << std::endl;
-        return 1;
-    }
-    
-    // FIXME: SilverLining seems to be uncomfortable with default FBO settings?
-    //        I'm not sure if this is a SilverLining bug or mine
-    osgFX::EffectCompositor::XmlTemplateMap templateMap;
-    osgFX::EffectCompositor* compositor = new osgFX::EffectCompositor;
-    //compositor->setRenderTargetImplementation( osg::Camera::PIXEL_BUFFER );  // FIXME: PIXEL_BUFFER can't work with NVIDIA 310.70 driver?
-    compositor->loadFromXML( xmlRoot.get(), templateMap, NULL );
-#else
     osgFX::EffectCompositor* compositor = osgFX::readEffectFile( effectFile );
     if ( !compositor )
     {
         OSG_WARN << "Effect file " << effectFile << " can't be loaded!" << std::endl;
         return 1;
     }
-#endif
     
     // For the fastest and simplest effect use, this is enough!
     compositor->addChild( scene.get() );
@@ -187,14 +172,19 @@ int main( int argc, char** argv )
     // Add all to the root node of the viewer
     osg::ref_ptr<osg::Group> root = new osg::Group;
     root->addChild( compositor );
-    
     if ( !normalSceneFile.empty() )
     {
-        // 
+        // FIXME: Disable near/far computing here; otherwise the scene with effects will
+        // be clipped by the main camera. Maybe we can find better solutions instead?
+        viewer.getCamera()->setComputeNearFarMode( osg::Camera::DO_NOT_COMPUTE_NEAR_FAR );
+        
+        // To make sure effect compositor can be correctly merged with normal scene,
+        // you must force set gl_FragDepth in the last pass which is used for display.
+        // This may be later applied automatically with PostDrawCallbacks, but at present
+        // it should be done manually (see dof.xml for details).
         root->addChild( osgDB::readNodeFile(normalSceneFile) );
     }
     
-    osgViewer::Viewer viewer;
     viewer.getCamera()->setLODScale( lodscale );
     viewer.addEventHandler( new osgGA::StateSetManipulator(viewer.getCamera()->getOrCreateStateSet()) );
     viewer.addEventHandler( new osgViewer::StatsHandler );

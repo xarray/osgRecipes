@@ -40,13 +40,6 @@ public:
         /** Check if the pass works like an HUD camera to display results */
         bool isDisplayPass() const
         { return pass.valid() && pass->getRenderOrder()!=osg::Camera::PRE_RENDER; }
-        
-        /** Change the display pass to a deferred pass so that we could connect the output/input of two compositors */
-        bool resetAsDeferredPass( osg::Camera::BufferComponent bc, osg::Texture* output,
-                                  osg::Camera::RenderTargetImplementation impl=osg::Camera::FRAME_BUFFER_OBJECT );
-        
-        /** Change the deferred pass to a display pass so it will directly be shown instead of rendering to buffers */
-        bool resetAsDisplayPass();
     };
     
     /** Set the render target implementation used for new pass by default */

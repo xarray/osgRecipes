@@ -1,6 +1,7 @@
 #include <osg/io_utils>
 #include <osg/FrameBufferObject>
 #include <osg/ImageStream>
+#include <osg/Depth>
 #include <osg/Texture1D>
 #include <osg/Texture2D>
 #include <osg/Texture2DArray>
@@ -302,8 +303,8 @@ osg::Camera* EffectCompositor::createPassFromXML( osgDB::XmlNode* xmlNode )
     if ( !numAttached )
     {
         // Automatically treat cameras without outputs as nested ones in the normal scene
-        camera->setClearMask( 0 );
         camera->setRenderOrder( osg::Camera::NESTED_RENDER );
+        camera->setClearMask( 0 );
         
         // Note that FBO should be changed back to FRAME_BUFFER for handling camera resizing
         camera->setRenderTargetImplementation( osg::Camera::FRAME_BUFFER );

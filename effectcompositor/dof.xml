@@ -50,6 +50,7 @@
            vec4 blur  = texture2D(blurredTex, uv);
            float depth = texture2D(depthTex, uv).s;
            gl_FragColor = mix(sharp, blur, clamp((depth - focus)/range, 0.0, 1.0));
+           gl_FragDepth = depth;
         }
         ]]>
         </source>

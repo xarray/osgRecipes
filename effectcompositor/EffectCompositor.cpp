@@ -38,7 +38,7 @@ public:
                 _compositor->setPreservedNearAndFar( cv->getCalculatedNearPlane(), cv->getCalculatedFarPlane() );
             }
             else if ( camera->getNumChildren()>0 )  // Use camera's own children as display surface
-                camera->traverse( *nv );
+                camera->osg::Group::traverse( *nv );
             else                                    // Render to a fullscreen quad
                 _compositor->getOrCreateQuad()->accept( *nv );
         }
@@ -50,34 +50,6 @@ protected:
     osg::observer_ptr<EffectCompositor> _compositor;
     EffectCompositor::PassType _type;
 };
-
-/* EffectCompositor::PassData */
-
-bool EffectCompositor::PassData::resetAsDeferredPass( osg::Camera::BufferComponent bc, osg::Texture* output, osg::Camera::RenderTargetImplementation impl )
-{
-    if ( type==DEFERRED_PASS )
-    {
-        pass->setClearMask( GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT );
-        pass->setRenderOrder( osg::Camera::PRE_RENDER );
-        pass->setRenderTargetImplementation( impl );
-        pass->setViewport( 0, 0, output->getTextureWidth(), output->getTextureHeight() );
-        pass->attach( bc, output );
-        return true;
-    }
-    return false;
-}
-
-bool EffectCompositor::PassData::resetAsDisplayPass()
-{
-    if ( type==DEFERRED_PASS )
-    {
-        pass->setClearMask( GL_DEPTH_BUFFER_BIT );
-        pass->setRenderOrder( osg::Camera::POST_RENDER );
-        pass->setRenderTargetImplementation( osg::Camera::FRAME_BUFFER );
-        return true;
-    }
-    return false;
-}
 
 /* EffectCompositor */
 
@@ -431,12 +403,12 @@ void EffectCompositor::traverse( osg::NodeVisitor& nv )
 {
     if ( nv.getVisitorType()==osg::NodeVisitor::CULL_VISITOR )
     {
+        osgUtil::CullVisitor* cv = static_cast<osgUtil::CullVisitor*>( &nv );
+        osg::RefMatrix* projectionMatrix = cv->getProjectionMatrix();
         if ( _inbuiltUniforms.size()>0 )
         {
-            osgUtil::CullVisitor* cv = static_cast<osgUtil::CullVisitor*>( &nv );
             double fovy = 0.0, aspectRatio = 0.0, zNear = 0.0, zFar = 0.0;
-            if ( cv->getProjectionMatrix() )
-                cv->getProjectionMatrix()->getPerspective( fovy, aspectRatio, zNear, zFar );
+            if ( projectionMatrix ) projectionMatrix->getPerspective( fovy, aspectRatio, zNear, zFar );
             if ( _preservedZNear!=FLT_MAX ) zNear = _preservedZNear;
             if ( _preservedZFar!=FLT_MAX ) zFar = _preservedZFar;
             
@@ -498,16 +470,15 @@ void EffectCompositor::traverse( osg::NodeVisitor& nv )
                     if ( cv->getModelViewMatrix() ) itr->second->set( osg::Matrixf::inverse(*cv->getModelViewMatrix()) );
                     break;
                 case SCENE_PROJECTION_MATRIX:
-                    if ( cv->getProjectionMatrix() ) itr->second->set( osg::Matrixf(*cv->getProjectionMatrix()) );
+                    if ( projectionMatrix ) itr->second->set( osg::Matrixf(*projectionMatrix) );
                     break;
                 case SCENE_INV_PROJECTION_MATRIX:
-                    if ( cv->getProjectionMatrix() ) itr->second->set( osg::Matrixf::inverse(*cv->getProjectionMatrix()) );
+                    if ( projectionMatrix ) itr->second->set( osg::Matrixf::inverse(*projectionMatrix) );
                     break;
                 default: break;
                 }
             }
         }
-        
         traverseAllPasses( nv );
         return;  // don't traverse as usual
     }

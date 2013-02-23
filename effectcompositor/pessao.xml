@@ -349,8 +349,6 @@
 
             vec4 color0 = texture2D(sceneTex, texCoord0);
             vec4 color1 = vec4(1.0);  // TODO: texture2D(sceneTex2, texCoord1);
-            vec4 lightColor = vec4(1.0);  // TODO: texture2D(lightTex, vLight);
-            vec4 light = clamp(ssao * lightColor, 0.0, 1.0);
 
             vec3 n = normalize(normal);
             vec3 l0 = normalize(lightVector0);
@@ -405,7 +403,7 @@
     </uniform>
     
     <uniform name="colorBlendFactor" type="float">
-        <value>0.8</value>
+        <value>1.0</value>
     </uniform>
 
     <uniform name="nearPlaneValue" type="float"><inbuilt_value>near_plane</inbuilt_value></uniform>
