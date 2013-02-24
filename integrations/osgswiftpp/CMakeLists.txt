@@ -1,0 +1,30 @@
+SET(EXAMPLE_NAME osgswiftpp)
+SET(EXAMPLE_FILES
+    osgswiftpp.cpp
+    fileio.cpp
+    lut.cpp
+    mesh.cpp
+    mesh_utils.cpp
+    object.cpp
+    pair.cpp
+    pqueue.cpp
+    scene.cpp
+    qhull/geom.c
+    qhull/geom2.c
+    qhull/global.c
+    qhull/io.c
+    qhull/libqhull.c
+    qhull/mem.c
+    qhull/merge.c
+    qhull/poly.c
+    qhull/poly2.c
+    qhull/qset.c
+    qhull/random.c
+    qhull/rboxlib.c
+    qhull/stat.c
+    qhull/user.c
+    qhull/usermem.c
+    qhull/userprintf.c
+    qhull/userprintf_rbox.c
+)
+START_EXAMPLE()
