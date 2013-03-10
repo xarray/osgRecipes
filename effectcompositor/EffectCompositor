@@ -181,7 +181,7 @@ public:
         manage the scene using internal cameras, and won't return back znear/zfar to the
         main camera in osgUtil::CullVisitor
     */
-    void setPreservedNearAndFar( double zn, double zf ) { _preservedZNear = zn; _preservedZFar = zf; }
+    void setPreservedNearAndFar( unsigned int frame, double zn, double zf );
     void getPreservedNearAndFar( double& zn, double& zf ) { zn = _preservedZNear; zf = _preservedZFar; }
     
     /** Create a new pass from XML
@@ -260,6 +260,7 @@ protected:
     osg::Camera::RenderTargetImplementation _renderTargetImpl;
     double _preservedZNear;
     double _preservedZFar;
+    unsigned int _preservingNearFarFrameNumber;
 };
 
 /** Read effect compositor from the XML file/stream */

@@ -131,6 +131,7 @@ ADD_SUBDIRECTORY(osgsilverlining)     # OSG & Sundog Silverlining
 #ADD_SUBDIRECTORY(osgnewton)           # OSG & Newton Physics
 #ADD_SUBDIRECTORY(osgnurbs)            # OSG & openNURBS
 #ADD_SUBDIRECTORY(osgrecast)           # OSG & Recastnavigation
+#ADD_SUBDIRECTORY(osgdb_nanosvg)       # OSG & NanoSVG
 
 #ADD_SUBDIRECTORY(osganimata)          # OSG & Animata
 #ADD_SUBDIRECTORY(osgdance)            # OSG & DANCE

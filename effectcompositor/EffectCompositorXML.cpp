@@ -299,7 +299,17 @@ osg::Camera* EffectCompositor::createPassFromXML( osgDB::XmlNode* xmlNode )
     }
     
     if ( program->getNumShaders()>0 )
+    {
+        const osg::Texture* attached = camera->getBufferAttachmentMap().size()==0 ? NULL :
+                                       camera->getBufferAttachmentMap().begin()->second._texture.get();
+        if ( attached )
+        {
+            osg::Vec3 texSize( attached->getTextureWidth(), attached->getTextureHeight(), attached->getTextureDepth() );
+            stateset->addUniform( new osg::Uniform("osg_OutputBufferSize", texSize) );
+        }
         stateset->setAttributeAndModes( program.get() );
+    }
+    
     if ( !numAttached )
     {
         // Automatically treat cameras without outputs as nested ones in the normal scene
@@ -659,6 +669,8 @@ osg::Uniform* EffectCompositor::createUniformFromXML( osgDB::XmlNode* xmlNode, b
             //     osg_ModelViewMatrix, osg_ProjectionMatrix, osg_ModelViewProjectionMatrix, osg_NormalMatrix
             //     osg_FrameNumber, osg_FrameTime, osg_DeltaFrameTime, osg_SimulationTime, osg_DeltaSimulationTime,
             //     osg_ViewMatrix, osg_ViewMatrixInverse
+            // These are defined in the EffectCompositor:
+            //     osg_OutputBufferSize
             
             std::string valueName = xmlChild->getTrimmedContents();
             if ( valueName=="eye_position" ) addInbuiltUniform( EYE_POSITION, uniform );
@@ -765,6 +777,7 @@ osg::Shader* EffectCompositor::createShaderFromXML( osgDB::XmlNode* xmlNode, boo
     else shader = new osg::Shader;
     shader->setName( name );
     
+    std::string filePath;
     for ( unsigned int i=0; i<xmlNode->children.size(); ++i )
     {
         osgDB::XmlNode* xmlChild = xmlNode->children[i].get();
@@ -795,11 +808,37 @@ osg::Shader* EffectCompositor::createShaderFromXML( osgDB::XmlNode* xmlNode, boo
                            << xmlChild->getTrimmedContents() << std::endl;
             }
             else
+            {
+                filePath = osgDB::getFilePath( shaderFile );
                 shader->loadShaderSourceFromFile( shaderFile );
+            }
         }
         else
             OSG_NOTICE << "EffectCompositor: <shader> doesn't recognize child element " << xmlChild->name << std::endl;
     }
+    
+    std::string code = shader->getShaderSource();
+    std::string::size_type pos = 0;
+    while ( (pos = code.find("#include", pos))!=std::string::npos )
+    {
+        // Find all "#include" and handle them
+        std::string::size_type pos2 = code.find_first_not_of(" ", pos + 8);
+        if ( pos2==std::string::npos || code[pos2]!='\"' ) break;
+        
+        std::string::size_type pos3 = code.find("\"", pos2 + 1);
+        if ( pos3==std::string::npos ) break;
+        
+        std::string filename = code.substr(pos2 + 1, pos3 - pos2 - 1);
+        filename = osgDB::findDataFile( filename );
+        if ( filename.empty() ) filename = osgDB::findDataFile( filePath + "/" + filename );
+        
+        osg::ref_ptr<osg::Shader> innerShader = osgDB::readShaderFile( shader->getType(), filename );
+        if ( !innerShader ) break;
+        
+        code.replace( pos, pos3 - pos + 1, innerShader->getShaderSource() );
+        pos += innerShader->getShaderSource().size();
+    }
+    shader->setShaderSource( code );
     
     if ( asGlobal )
     {

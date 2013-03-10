@@ -35,7 +35,13 @@ public:
                 _compositor->osg::Group::traverse( *nv );
                 
                 // We obtain the actual near/far values at the end of forward pass traversing
-                _compositor->setPreservedNearAndFar( cv->getCalculatedNearPlane(), cv->getCalculatedFarPlane() );
+                double znear = cv->getCalculatedNearPlane();
+                double zfar = cv->getCalculatedFarPlane();
+                osg::Matrixd projection = *(cv->getProjectionMatrix());
+                cv->clampProjectionMatrix( projection, znear, zfar );
+                
+                const osg::FrameStamp* fs = cv->getFrameStamp();
+                if ( fs ) _compositor->setPreservedNearAndFar( fs->getFrameNumber(), znear, zfar );
             }
             else if ( camera->getNumChildren()>0 )  // Use camera's own children as display surface
                 camera->osg::Group::traverse( *nv );
@@ -54,7 +60,9 @@ protected:
 /* EffectCompositor */
 
 EffectCompositor::EffectCompositor()
-:   _renderTargetImpl(osg::Camera::FRAME_BUFFER_OBJECT), _preservedZNear(FLT_MAX), _preservedZFar(FLT_MAX)
+:   _renderTargetImpl(osg::Camera::FRAME_BUFFER_OBJECT),
+    _preservedZNear(FLT_MAX), _preservedZFar(-FLT_MAX),
+    _preservingNearFarFrameNumber(0)
 {
     getOrCreateQuad();
     setCurrentTechnique( "default" );
@@ -69,7 +77,8 @@ EffectCompositor::EffectCompositor( const EffectCompositor& copy, const osg::Cop
     _currentTechnique(copy._currentTechnique), _quad(copy._quad),
     _renderTargetImpl(copy._renderTargetImpl),
     _preservedZNear(copy._preservedZNear),
-    _preservedZFar(copy._preservedZFar)
+    _preservedZFar(copy._preservedZFar),
+    _preservingNearFarFrameNumber(copy._preservingNearFarFrameNumber)
 {
 }
 
@@ -399,6 +408,21 @@ osg::Geode* EffectCompositor::getOrCreateQuad()
     return _quad.get();
 }
 
+void EffectCompositor::setPreservedNearAndFar( unsigned int frame, double zn, double zf )
+{
+    if ( _preservingNearFarFrameNumber!=frame )
+    {
+        _preservingNearFarFrameNumber = frame;
+        _preservedZNear = zn;
+        _preservedZFar = zf;
+    }
+    else
+    {
+        _preservedZNear = osg::maximum(zn, _preservedZNear);
+        _preservedZFar = osg::minimum(zf, _preservedZFar);
+    }
+}
+
 void EffectCompositor::traverse( osg::NodeVisitor& nv )
 {
     if ( nv.getVisitorType()==osg::NodeVisitor::CULL_VISITOR )
@@ -410,7 +434,7 @@ void EffectCompositor::traverse( osg::NodeVisitor& nv )
             double fovy = 0.0, aspectRatio = 0.0, zNear = 0.0, zFar = 0.0;
             if ( projectionMatrix ) projectionMatrix->getPerspective( fovy, aspectRatio, zNear, zFar );
             if ( _preservedZNear!=FLT_MAX ) zNear = _preservedZNear;
-            if ( _preservedZFar!=FLT_MAX ) zFar = _preservedZFar;
+            if ( _preservedZFar!=-FLT_MAX ) zFar = _preservedZFar;
             
             for ( InbuiltUniformList::const_iterator itr=_inbuiltUniforms.begin();
                   itr!=_inbuiltUniforms.end(); ++itr )
