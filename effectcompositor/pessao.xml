@@ -310,6 +310,8 @@
         uniform float colorBlendFactor;
         uniform vec3 lightDirUniform;
         uniform vec3 osg_OutputBufferSize;
+        uniform float viewportWidth;
+        uniform float viewportHeight;
 
         varying vec3 normal;
         varying vec3 localNormal;
@@ -328,7 +330,7 @@
 
         void main()
         {
-            vec2 aoTexFactor = vec2(1.0) / osg_OutputBufferSize.xy / subSamplingFactor;
+            vec2 aoTexFactor = vec2(1.0) / vec2(viewportWidth, viewportHeight) / subSamplingFactor;
             vec2 aoTexCoord = gl_FragCoord.xy * aoTexFactor;
             vec2 texCoord0 = gl_TexCoord[0].st;
             vec2 texCoord1 = gl_TexCoord[1].st;
@@ -340,14 +342,14 @@
 
             float off = max(0.0, 1.0 - (artifactsRemoveCountPESSAO - 1.0) * 0.5)
                                * (0.25 + 0.75 * pow(1.0 - poiSSAO.z, 3.0));
-            ssao4.x  = texture2D(aoTex, vec2((gl_FragCoord.x - off) / osg_OutputBufferSize.x,
-                                             (gl_FragCoord.y + off) / osg_OutputBufferSize.y) / subSamplingFactor).x;
-            ssao4.y  = texture2D(aoTex, vec2((gl_FragCoord.x - off) / osg_OutputBufferSize.x,
-                                             (gl_FragCoord.y - off) / osg_OutputBufferSize.y) / subSamplingFactor).x;
-            ssao4.z  = texture2D(aoTex, vec2((gl_FragCoord.x + off) / osg_OutputBufferSize.x,
-                                             (gl_FragCoord.y - off) / osg_OutputBufferSize.y) / subSamplingFactor).x;
-            ssao4.w  = texture2D(aoTex, vec2((gl_FragCoord.x + off) / osg_OutputBufferSize.x,
-                                             (gl_FragCoord.y + off) / osg_OutputBufferSize.y) / subSamplingFactor).x;
+            ssao4.x  = texture2D(aoTex, vec2((gl_FragCoord.x - off) / viewportWidth,
+                                             (gl_FragCoord.y + off) / viewportHeight) / subSamplingFactor).x;
+            ssao4.y  = texture2D(aoTex, vec2((gl_FragCoord.x - off) / viewportWidth,
+                                             (gl_FragCoord.y - off) / viewportHeight) / subSamplingFactor).x;
+            ssao4.z  = texture2D(aoTex, vec2((gl_FragCoord.x + off) / viewportWidth,
+                                             (gl_FragCoord.y - off) / viewportHeight) / subSamplingFactor).x;
+            ssao4.w  = texture2D(aoTex, vec2((gl_FragCoord.x + off) / viewportWidth,
+                                             (gl_FragCoord.y + off) / viewportHeight) / subSamplingFactor).x;
             ssao = sum4(ssao4) + 2.0 * ssao - max(ssao, max4(ssao4)) - min(ssao, min4(ssao4));
             ssao *= 0.25;
 
@@ -359,7 +361,7 @@
 
             vec4 color0 = texture2D(sceneTex, texCoord0);
             vec4 color1 = vec4(1.0);  // TODO: texture2D(sceneTex2, texCoord1);
-
+            
             vec3 n = normalize(normal);
             vec3 l0 = normalize(lightVector0);
             vec3 h0 = normalize(halfVector0);
@@ -382,7 +384,7 @@
             specular = gl_FrontLightProduct[1].specular * gl_FrontMaterial.specular * power * strength;
             color += clamp(ambient + diffuse + specular, 0.0, 1.0);
             color += gl_FrontLightModelProduct.sceneColor;
-
+            
             vec4 summaryColor = clamp(1.25 * (color * color0 * color1 * ssao), 0.0, 1.0);
             color = (1.0-colorBlendFactor)+colorBlendFactor*summaryColor;
 
@@ -413,9 +415,11 @@
     </uniform>
     
     <uniform name="colorBlendFactor" type="float">
-        <value>0.5</value>
+        <value>1.0</value>
     </uniform>
-
+    
+    <uniform name="viewportWidth" type="float"><inbuilt_value>viewport_width</inbuilt_value></uniform>
+    <uniform name="viewportHeight" type="float"><inbuilt_value>viewport_height</inbuilt_value></uniform>
     <uniform name="nearPlaneValue" type="float"><inbuilt_value>near_plane</inbuilt_value></uniform>
     <uniform name="farPlaneValue" type="float"><inbuilt_value>far_plane</inbuilt_value></uniform>
     <uniform name="eyePosition" type="vec3"><inbuilt_value>eye_position</inbuilt_value></uniform>
@@ -485,6 +489,8 @@
         </deferred_pass>
 
         <deferred_pass name="SSAO_Combining">
+            <uniform>viewportWidth</uniform>
+            <uniform>viewportHeight</uniform>
             <uniform>lightDirUniform</uniform>
             <uniform>colorBlendFactor</uniform>
             <input_buffer unit="0" varname="sceneTex">originalScene</input_buffer>

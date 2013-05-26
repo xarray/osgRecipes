@@ -225,9 +225,9 @@ void SparkDrawable::drawImplementation( osg::RenderInfo& renderInfo ) const
     osg::State* state = renderInfo.getState();
     state->disableAllVertexArrays();
     
-    // The disableAllVertexArrays() still keeps texture unit 0 enabled, and
-    // it affects the following particle texture rendering work. REMEMBER to disable it here
-    state->disableTexCoordPointer( 0 );
+    // Make sure the client unit and active unit are unified
+    state->setClientActiveTextureUnit( 0 );
+    state->setActiveTextureUnit( 0 );
     
     SPK::GL::GLRenderer::saveGLStates();
     if ( _useProtoSystem && _protoSystem )
