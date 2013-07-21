@@ -118,10 +118,11 @@ ADD_SUBDIRECTORY(osgdirectwrite)      # OSG & Microsoft DirectWrite
 ADD_SUBDIRECTORY(osgguichan)          # OSG & GUIChan
 ADD_SUBDIRECTORY(osgswiftpp)          # OSG & Swift++
 ADD_SUBDIRECTORY(osgsilverlining)     # OSG & Sundog Silverlining
-#ADD_SUBDIRECTORY(osgtriton)           # OSG & Sundog Triton
+ADD_SUBDIRECTORY(osgtriton)           # OSG & Sundog Triton Ocean
 
 # TODO List
-#ADD_SUBDIRECTORY(osgcarve)            # OSG & Carve
+#ADD_SUBDIRECTORY(osgnvfx)             # OSG & nvFX
+#ADD_SUBDIRECTORY(osgrecast)           # OSG & Recastnavigation
 #ADD_SUBDIRECTORY(osgcl)               # OSG & OpenCL
 #ADD_SUBDIRECTORY(osgois)              # OSG & OIS
 #ADD_SUBDIRECTORY(osgcrogai)           # OSG & Crogai
@@ -131,9 +132,7 @@ ADD_SUBDIRECTORY(osgsilverlining)     # OSG & Sundog Silverlining
 #ADD_SUBDIRECTORY(osgmathgl)           # OSG & MathGL
 #ADD_SUBDIRECTORY(osgnewton)           # OSG & Newton Physics
 #ADD_SUBDIRECTORY(osgnurbs)            # OSG & openNURBS
-#ADD_SUBDIRECTORY(osgrecast)           # OSG & Recastnavigation
 #ADD_SUBDIRECTORY(osgdb_nanosvg)       # OSG & NanoSVG
-
 #ADD_SUBDIRECTORY(osganimata)          # OSG & Animata
 #ADD_SUBDIRECTORY(osgdance)            # OSG & DANCE
 #ADD_SUBDIRECTORY(osgmini)             # OSG & libMini

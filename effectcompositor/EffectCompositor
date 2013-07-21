@@ -46,6 +46,10 @@ public:
     void setRenderTargetImplementation( osg::Camera::RenderTargetImplementation r ) { _renderTargetImpl = r; }
     osg::Camera::RenderTargetImplementation getRenderTargetImplementation() const { return _renderTargetImpl; }
     
+    /** Set default output buffer size */
+    void setRenderTargetResolution( const osg::Vec3& r ) { _renderTargetResolution = r; }
+    const osg::Vec3& getRenderTargetResolution() const { return _renderTargetResolution; }
+    
     /** Set current technique (pass list) */
     void setCurrentTechnique( const std::string& tech ) { _currentTechnique = tech; }
     
@@ -257,6 +261,7 @@ protected:
     std::string _currentTechnique;
     
     osg::ref_ptr<osg::Geode> _quad;
+    osg::Vec3 _renderTargetResolution;
     osg::Camera::RenderTargetImplementation _renderTargetImpl;
     double _preservedZNear;
     double _preservedZFar;

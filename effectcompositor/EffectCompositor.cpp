@@ -60,7 +60,8 @@ protected:
 /* EffectCompositor */
 
 EffectCompositor::EffectCompositor()
-:   _renderTargetImpl(osg::Camera::FRAME_BUFFER_OBJECT),
+:   _renderTargetResolution(1024.0f, 1024.0f, 1.0f),
+    _renderTargetImpl(osg::Camera::FRAME_BUFFER_OBJECT),
     _preservedZNear(FLT_MAX), _preservedZFar(-FLT_MAX),
     _preservingNearFarFrameNumber(0)
 {
@@ -75,6 +76,7 @@ EffectCompositor::EffectCompositor( const EffectCompositor& copy, const osg::Cop
     _uniformMap(copy._uniformMap), _shaderMap(copy._shaderMap),
     _inbuiltUniforms(copy._inbuiltUniforms),
     _currentTechnique(copy._currentTechnique), _quad(copy._quad),
+    _renderTargetResolution(copy._renderTargetResolution),
     _renderTargetImpl(copy._renderTargetImpl),
     _preservedZNear(copy._preservedZNear),
     _preservedZFar(copy._preservedZFar),
