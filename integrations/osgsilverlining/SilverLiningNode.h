@@ -2,6 +2,7 @@
 #define H_SILVERLININGNODE
 
 #include <osg/Geode>
+#include <osg/Texture>
 #include <SilverLining.h>
 
 class SilverLiningNode : public osg::Geode

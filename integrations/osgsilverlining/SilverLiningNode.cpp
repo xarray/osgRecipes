@@ -67,8 +67,14 @@ SilverLiningNode::~SilverLiningNode()
 void SilverLiningNode::CloudDrawable::drawImplementation( osg::RenderInfo& renderInfo ) const
 {
     renderInfo.getState()->disableAllVertexArrays();
-    _silverLining->atmosphere()->DrawObjects( true, true, true );
+    _silverLining->atmosphere()->DrawObjects( true, true, true, 1.0f );
     renderInfo.getState()->dirtyAllVertexArrays();
+    
+    /*void* shadowTexID = 0;
+    SilverLining::Matrix4 lightMatrix, shadowMatrix;
+    if ( _silverLining->atmosphere()->GetShadowMap(shadowTexID, &lightMatrix, &shadowMatrix) )
+    {
+    }*/
 }
 
 osg::BoundingBox SilverLiningNode::CloudDrawable::computeBound() const

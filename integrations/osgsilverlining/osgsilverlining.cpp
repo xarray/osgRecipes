@@ -1,5 +1,7 @@
 #include <osg/io_utils>
 #include <osg/Depth>
+#include <osg/TexEnv>
+#include <osg/TexGen>
 #include <osg/LightModel>
 #include <osg/LightSource>
 #include <osg/MatrixTransform>
@@ -38,8 +40,8 @@ public:
         // Create cloud layers
         SilverLining::CloudLayer* cumulusCongestusLayer =
             SilverLining::CloudLayerFactory::Create( CUMULUS_CONGESTUS );
-        cumulusCongestusLayer->SetIsInfinite( true );
-        cumulusCongestusLayer->SetBaseAltitude( 500 );
+        //cumulusCongestusLayer->SetIsInfinite( true );
+        cumulusCongestusLayer->SetBaseAltitude( 1500 );
         cumulusCongestusLayer->SetThickness( 200 );
         cumulusCongestusLayer->SetBaseLength( 40000 );
         cumulusCongestusLayer->SetBaseWidth( 40000 );
@@ -93,6 +95,9 @@ public:
 osg::Group* createShadowedScene( osg::Node* scene, osg::LightSource* ls )
 {
     osg::ref_ptr<osgShadow::ShadowSettings> settings = new osgShadow::ShadowSettings;
+    settings->setBaseShadowTextureUnit( 2 );
+    settings->setReceivesShadowTraversalMask( SHADOW_RECEIVE_MASK );
+	settings->setCastsShadowTraversalMask( SHADOW_CAST_MASK );
     settings->setShaderHint( osgShadow::ShadowSettings::PROVIDE_FRAGMENT_SHADER );
     settings->setTextureSize( osg::Vec2s(2048, 2048) );
 #if 0
@@ -101,8 +106,6 @@ osg::Group* createShadowedScene( osg::Node* scene, osg::LightSource* ls )
 #endif
     
     osg::ref_ptr<osgShadow::ShadowedScene> shadowedScene = new osgShadow::ShadowedScene;
-	shadowedScene->setReceivesShadowTraversalMask( SHADOW_RECEIVE_MASK );
-	shadowedScene->setCastsShadowTraversalMask( SHADOW_CAST_MASK );
 	shadowedScene->setShadowTechnique( new osgShadow::ViewDependentShadowMap );
 	shadowedScene->setShadowSettings( settings.get() );
     shadowedScene->addChild( scene );

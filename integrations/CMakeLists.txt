@@ -115,12 +115,13 @@ ADD_SUBDIRECTORY(osgalvar)            # OSG & ALVAR
 ADD_SUBDIRECTORY(osgberkelium)        # OSG & Berkelium
 ADD_SUBDIRECTORY(osgdb_physfs)        # OSG & PhysicsFS
 ADD_SUBDIRECTORY(osgdirectwrite)      # OSG & Microsoft DirectWrite
-ADD_SUBDIRECTORY(osgguichan)          # OSG & GUIChan
+ADD_SUBDIRECTORY(osgperceptual)       # OSG & Intel Perceptual Computing SDK
 ADD_SUBDIRECTORY(osgswiftpp)          # OSG & Swift++
 ADD_SUBDIRECTORY(osgsilverlining)     # OSG & Sundog Silverlining
 ADD_SUBDIRECTORY(osgtriton)           # OSG & Sundog Triton Ocean
 
 # TODO List
+#ADD_SUBDIRECTORY(osgguichan)          # OSG & GUIChan
 #ADD_SUBDIRECTORY(osgnvfx)             # OSG & nvFX
 #ADD_SUBDIRECTORY(osgrecast)           # OSG & Recastnavigation
 #ADD_SUBDIRECTORY(osgcl)               # OSG & OpenCL

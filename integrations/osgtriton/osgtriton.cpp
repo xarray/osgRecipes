@@ -68,17 +68,26 @@ public:
         {
             switch ( ea.getKey() )
             {
-            case '1':
+            case '1':  // add wind
                 {
                     Triton::WindFetch wf;
-                    wf.SetWind( 10.0, 0.0 );
+                    wf.SetWind( 4.0, 0.0 );
                     if ( _triton->environment() )
                         _triton->environment()->AddWindFetch( wf );
                 }
                 break;
-            case '0':
+            case '2':
+                {
+                    if ( _testImpact ) delete _testImpact;
+                    _testImpact = new Triton::Impact(_triton->ocean(), 5.0, 200.0, true);
+                    _testImpact->Trigger(Triton::Vector3(0.0f, 0.0f, 100.0f), Triton::Vector3(0.0f, 0.0f,-1.0f),
+                                         500.0, 0.01);
+                }
+                break;
+            case '0':  // clear winds
                 if ( _triton->environment() )
                     _triton->environment()->ClearWindFetches();
+                if ( _testImpact ) delete _testImpact;
                 break;
             default: break;
             }
@@ -86,8 +95,9 @@ public:
         return false;
     }
     
-    TritonTester( TritonNode* tn ) { _triton = tn; }
+    TritonTester( TritonNode* tn ) { _triton = tn; _testImpact = NULL; }
     TritonNode* _triton;
+    Triton::Impact* _testImpact;
 };
 
 #define SHADOW_RECEIVE_MASK 0x1
@@ -156,8 +166,8 @@ int main( int argc, char** argv )
         triton->setCullingActive( false );  // Use default infinite ocean surface so disable culling
     
     osg::ref_ptr<osg::MatrixTransform> scene = new osg::MatrixTransform;
-    scene->addChild( shadowed ? createShadowedScene(model, ls.get()) : model );
     scene->addChild( triton.get() );
+    scene->addChild( shadowed ? createShadowedScene(model, ls.get()) : model );
     
 #ifdef USE_SILVERLINING_SKY
     osg::ref_ptr<SilverLiningNode> silverLining = new MySilverLiningNode( "Your user name", "Your license code" );

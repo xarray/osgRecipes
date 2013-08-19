@@ -9,6 +9,7 @@ namespace SilverLining
 class Atmosphere;
 }
 
+/** The ocean rendering node */
 class TritonNode : public osg::Geode
 {
     class OceanDrawable : public osg::Drawable
@@ -25,14 +26,18 @@ class TritonNode : public osg::Geode
         {
             osg::ref_ptr<osg::Vec3Array> vertices;
             osg::ref_ptr<osg::PrimitiveSet> primitiveSet;
+            osg::BoundingBox boundingBox;
         };
         
         std::vector<OceanMeshData>& getOceanMeshList() { return _oceanMeshes; }
         const std::vector<OceanMeshData>& getOceanMeshList() const { return _oceanMeshes; }
         
+        void dirtyEnvironmentMap() { _environmentMapHandle = 0; }
+        
     protected:
         std::vector<OceanMeshData> _oceanMeshes;
         TritonNode* _triton;
+        mutable void* _environmentMapHandle;
     };
     
     struct OceanUpdater : public osg::NodeCallback
@@ -89,6 +94,34 @@ protected:
     std::string _licenseKey;
     std::string _resourcePath;
     bool _initialized;
+};
+
+/** Update callback to update a node as a ship/wake generator */
+class WakeGeneratorCallback : public osg::NodeCallback
+{
+public:
+    WakeGeneratorCallback( TritonNode* t );
+    virtual void operator()( osg::Node* node, osg::NodeVisitor* nv );
+    
+    void setTritonNode( TritonNode* t ) { _triton = t; dirty(); }
+    TritonNode* getTritonNode() { return _triton.get(); }
+    const TritonNode* getTritonNode() const { return _triton.get(); }
+    
+    Triton::WakeGenerator* getWakeGenerator() { return _wakeGenerator; }
+    const Triton::WakeGenerator* getWakeGenerator() const { return _wakeGenerator; }
+    
+    Triton::WakeGeneratorParameters& getParameters() { return _parameters; }
+    const Triton::WakeGeneratorParameters& getParameters() const { return _parameters; }
+    
+    void dirty() { _dirty = true; }
+    
+protected:
+    osg::observer_ptr<TritonNode> _triton;
+    Triton::WakeGenerator* _wakeGenerator;
+    Triton::WakeGeneratorParameters _parameters;
+    osg::Vec3 _lastPosition;
+    double _lastFrameTime;
+    bool _dirty;
 };
 
 #endif

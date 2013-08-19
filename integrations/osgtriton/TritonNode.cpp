@@ -10,11 +10,12 @@
 /* TritonNode::OceanDrawable */
 
 TritonNode::OceanDrawable::OceanDrawable( TritonNode* s )
-:   _triton(s)
+:   _triton(s), _environmentMapHandle(0)
 {}
 
 TritonNode::OceanDrawable::OceanDrawable( const OceanDrawable& copy, const osg::CopyOp& copyop )
-:   osg::Drawable(copy, copyop), _triton(copy._triton)
+:   osg::Drawable(copy, copyop), _oceanMeshes(copy._oceanMeshes),
+    _triton(copy._triton), _environmentMapHandle(copy._environmentMapHandle)
 {}
 
 void TritonNode::OceanDrawable::drawImplementation( osg::RenderInfo& renderInfo ) const
@@ -24,11 +25,13 @@ void TritonNode::OceanDrawable::drawImplementation( osg::RenderInfo& renderInfo 
     
     _triton->initializeTriton( renderInfo );
 #ifdef USE_SILVERLINING_SKY
-    if ( _triton->atmosphere() && _triton->environment() )
+    if ( !_environmentMapHandle )
     {
-        void* ptr = NULL;
-        if ( _triton->atmosphere()->GetEnvironmentMap(ptr) )
-            _triton->environment()->SetEnvironmentMap( (Triton::TextureHandle)ptr );
+        if ( _triton->atmosphere() && _triton->environment() )
+        {
+            if ( _triton->atmosphere()->GetEnvironmentMap(_environmentMapHandle) )
+                _triton->environment()->SetEnvironmentMap( (Triton::TextureHandle)_environmentMapHandle );
+        }
     }
 #endif
     
@@ -36,16 +39,20 @@ void TritonNode::OceanDrawable::drawImplementation( osg::RenderInfo& renderInfo 
     {
         double time = renderInfo.getView()->getFrameStamp()->getSimulationTime();
         Triton::Ocean* ocean = _triton->ocean();
+        Triton::Environment* environment = _triton->environment();
         if ( _oceanMeshes.size()>0 )
         {
             for ( unsigned int i=0; i<_oceanMeshes.size(); ++i )
             {
+                const OceanMeshData& oceanMesh = _oceanMeshes[i];
+                environment->SetSeaLevel( oceanMesh.boundingBox.zMin() );
+                
                 // Bind VBO before SetPatchShader()
-                state->setVertexPointer( _oceanMeshes[i].vertices.get() );
+                state->setVertexPointer( oceanMesh.vertices.get() );
                 
                 // Render mesh in an ocean favor
                 ocean->SetPatchShader( time, 3 * sizeof(float), 0, false, NULL );
-                _oceanMeshes[i].primitiveSet->draw( *state, true );
+                oceanMesh.primitiveSet->draw( *state, true );
                 ocean->UnsetPatchShader();
             }
             state->unbindVertexBufferObject();
@@ -75,7 +82,7 @@ osg::BoundingBox TritonNode::OceanDrawable::computeBound() const
     return bbox;
 }
 
-/* SilverLiningNode::AtmosphereUpdater */
+/* TritonNode::OceanUpdater */
 
 void TritonNode::OceanUpdater::operator()( osg::Node* node, osg::NodeVisitor* nv )
 {
@@ -198,4 +205,48 @@ void TritonNode::updateGlobalLight()
                                            Triton::Vector3(diffuse[0], diffuse[1], diffuse[2]) );
         _environment->SetAmbientLight( Triton::Vector3(ambient[0], ambient[1], ambient[2]) );
     }
+}
+
+/* WakeGeneratorCallback */
+
+WakeGeneratorCallback::WakeGeneratorCallback( TritonNode* t )
+:   _triton(t), _lastFrameTime(0.0), _dirty(true)
+{
+}
+
+void WakeGeneratorCallback::operator()( osg::Node* node, osg::NodeVisitor* nv )
+{
+    bool firstRun = false;
+    if ( _dirty )
+    {
+        if ( _wakeGenerator!=NULL )
+        {
+            delete _wakeGenerator;
+            _wakeGenerator = NULL;
+        }
+        
+        if ( _triton.valid() && _triton->ocean() )
+        {
+            _wakeGenerator = new Triton::WakeGenerator( _triton->ocean(), _parameters );
+            _dirty = false;
+            firstRun = true;
+        }
+    }
+    
+    if ( _wakeGenerator!=NULL )
+    {
+        osg::Vec3 dir, pos = node->getWorldMatrices()[0].getTrans();
+        double velocity = 0.0, time = nv->getFrameStamp()->getSimulationTime();
+        if ( !firstRun )
+        {
+            dir = pos - _lastPosition;
+            velocity = dir.normalize();
+            velocity /= (time > _lastFrameTime) ? (time - _lastFrameTime) : 1.0;
+        }
+        
+        _wakeGenerator->Update( Triton::Vector3(pos[0], pos[1], pos[2]), Triton::Vector3(dir[0], dir[1], dir[2]), velocity, time );
+        _lastPosition = pos;
+        _lastFrameTime = time;
+    }
+    traverse( node, nv );
 }
