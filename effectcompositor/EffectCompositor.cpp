@@ -100,6 +100,7 @@ osg::Camera* EffectCompositor::createNewPass( PassType type, const std::string& 
         camera->setReferenceFrame( osg::Transform::ABSOLUTE_RF );
         camera->setProjectionMatrix( osg::Matrix::ortho2D(0.0, 1.0, 0.0, 1.0) );
         camera->setViewMatrix( osg::Matrix::identity() );
+        camera->addChild( createScreenQuad(1.0, 1.0) );
     }
     else
     {
@@ -515,4 +516,19 @@ void EffectCompositor::traverse( osg::NodeVisitor& nv )
         traverseAllPasses( nv );  // just handle uniform callbacks
     }
     osg::Group::traverse( nv );
+}
+
+osg::Geode* EffectCompositor::createScreenQuad( float width, float height, float scale )
+{
+    osg::Geometry* geom = osg::createTexturedQuadGeometry(
+        osg::Vec3(), osg::Vec3(width,0.0f,0.0f), osg::Vec3(0.0f,height,0.0f),
+        0.0f, 0.0f, width*scale, height*scale );
+    osg::ref_ptr<osg::Geode> quad = new osg::Geode;
+    quad->addDrawable( geom );
+    
+    int values = osg::StateAttribute::OFF|osg::StateAttribute::PROTECTED;
+    quad->getOrCreateStateSet()->setAttribute(
+        new osg::PolygonMode(osg::PolygonMode::FRONT_AND_BACK, osg::PolygonMode::FILL), values );
+    quad->getOrCreateStateSet()->setMode( GL_LIGHTING, values );
+    return quad.release();
 }

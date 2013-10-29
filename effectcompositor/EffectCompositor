@@ -242,6 +242,7 @@ public:
     virtual void traverse( osg::NodeVisitor& nv );
     
 protected:
+    osg::Geode* createScreenQuad( float width, float height, float scale=1.0f );
     void traverseAllPasses( osg::NodeVisitor& nv )
     {
         PassList& passList = getPassList();

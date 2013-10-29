@@ -84,3 +84,13 @@ ELSE(SILVERLINING_INCLUDE_DIR AND SILVERLINING_LIBRARY)
     START_EXAMPLE()
     
 ENDIF(SILVERLINING_INCLUDE_DIR AND SILVERLINING_LIBRARY)
+
+# osgFXEffectCompositor library.
+ADD_LIBRARY(osgFXEffectCompositor SHARED EffectCompositor.cpp
+                                         EffectCompositorXML.cpp)
+# Library.
+INSTALL(TARGETS osgFXEffectCompositor
+        LIBRARY DESTINATION lib)
+# Header.
+INSTALL(FILES EffectCompositor
+        DESTINATION include/osgFX)
