@@ -24,7 +24,7 @@ public:
             for ( osgGA::EventQueue::Events::const_iterator itr=events.begin();
                   itr!=events.end(); ++itr )
             {
-                const osgGA::GUIEventAdapter* ea = *itr;
+                const osgGA::GUIEventAdapter* ea = (*itr)->asGUIEventAdapter();
                 int x = ea->getX(), y = ea->getY();
                 if ( ea->getMouseYOrientation()==osgGA::GUIEventAdapter::Y_INCREASING_UPWARDS )
                     y = ea->getWindowHeight() - y;

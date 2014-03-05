@@ -69,17 +69,6 @@ public:
     
     bool createClothActor( PxPhysics* sdk, PxScene* scene, const PxTransform& pose )
     {
-        // Construct collision data
-        PxClothCollisionData collisionData;
-        collisionData.setToDefault();
-        if ( _collisionSpheres.size()>0 )
-        {
-            collisionData.numSpheres = static_cast<PxU32>(_collisionSpheres.size());
-            collisionData.spheres = &(_collisionSpheres.front());
-            collisionData.numPairs = static_cast<PxU32>(_capsuleIndices.size()) / 2;
-            collisionData.pairIndexBuffer = &(_capsuleIndices.front());
-        }
-        
         // Construct mesh
         PxClothMeshDesc meshDesc;
         meshDesc.setToDefault();
@@ -149,18 +138,29 @@ public:
         }
         
         PxClothFlags flags = PxClothFlag::eSWEPT_CONTACT/* | PxClothFlag::eGPU*/;
-        _cloth = sdk->createCloth( pose, *fabric, clothParticles, collisionData, flags );
+        _cloth = sdk->createCloth( pose, *fabric, clothParticles, flags );
         if ( !_cloth )
         {
             OSG_WARN << "Can't create the final cloth" << std::endl;
             return false;
         }
         
+        // Add collision data
+        for ( unsigned int i=0; i<_collisionSpheres.size(); ++i )
+        {
+            _cloth->addCollisionSphere( _collisionSpheres[i] );
+        }
+
+        for ( unsigned int i=0; i<_capsuleIndices.size(); i+=2 )
+        {
+            _cloth->addCollisionCapsule( _capsuleIndices[i], _capsuleIndices[i+1] );
+        }
+
         // Config the actor and add it to scene
         _cloth->addCollisionPlane( _collisionPlane );
         _cloth->addCollisionConvex( 1 );  // Convex references the first plane only
         createVirtualParticles( meshDesc, 4 );
-        configureCloth( PxClothPhaseSolverConfig::eSTIFF );
+        configureCloth();
         scene->addActor( *_cloth );
         return true;
     }
@@ -171,7 +171,7 @@ public:
         osg::Vec3Array* va = dynamic_cast<osg::Vec3Array*>( _clothGeometry->getVertexArray() );
         if ( va )
         {
-            PxClothReadData* data = _cloth->lockClothReadData();
+            PxClothParticleData* data = _cloth->lockParticleData();
             const PxClothParticle* clothParticles = data->particles;
             for ( unsigned int i=0; i<va->size(); ++i )
             {
@@ -188,23 +188,15 @@ public:
 protected:
     PxClothFabric* cookClothMesh( PxPhysics* sdk, PxScene* scene, PxClothMeshDesc& meshDesc )
     {
-        PxCookingParams cp;
+        PxTolerancesScale ts;
+        PxCookingParams cp(ts);
         PxCooking* cooking = PxCreateCooking( PX_PHYSICS_VERSION, sdk->getFoundation(), cp );
         if ( !cooking )
         {
             OSG_WARN << "Unable to create cooking object." << std::endl;
             return NULL;
         }
-        
-        PxToolkit::MemoryOutputStream memWriter;
-        if ( !cooking->cookClothFabric(meshDesc, scene->getGravity(), memWriter) )
-        {
-            OSG_WARN << "Can't cook fabric." << std::endl;
-            return NULL;
-        }
-        
-        PxToolkit::MemoryInputData memReader( memWriter.getData(), memWriter.getSize() );
-        return sdk->createClothFabric( memReader );
+        return PxClothFabricCreate( *sdk, meshDesc, scene->getGravity() );
     }
     
     void createVirtualParticles( PxClothMeshDesc& meshDesc, int numSamples )
@@ -267,23 +259,14 @@ protected:
                                      numSamples, s_virtualParticleWeights );
     }
     
-    void configureCloth( PxClothPhaseSolverConfig::SolverType type )
+    void configureCloth()
     {
         _cloth->setSolverFrequency( 240.0f );
         _cloth->setInertiaScale( 0.5f );
-        _cloth->setDampingCoefficient( 0.2f );
+        _cloth->setDampingCoefficient( physx::PxVec3(0.2f, 0.2f, 0.2f) );
         _cloth->setDragCoefficient( 0.1f );
         _cloth->setFrictionCoefficient( 0.5f );
         _cloth->setCollisionMassScale( 20.0f );
-        
-        PxClothPhaseSolverConfig bendCfg;
-        bendCfg.solverType= type;
-        bendCfg.stiffness = 1.0;
-        bendCfg.stretchStiffness = 0.5;
-        _cloth->setPhaseSolverConfig( PxClothFabricPhaseType::eBENDING, bendCfg );
-        _cloth->setPhaseSolverConfig( PxClothFabricPhaseType::eSTRETCHING, bendCfg );
-        _cloth->setPhaseSolverConfig( PxClothFabricPhaseType::eSHEARING, bendCfg );
-        _cloth->setPhaseSolverConfig( PxClothFabricPhaseType::eSTRETCHING_HORIZONTAL, bendCfg );
     }
     
     PxCloth* _cloth;

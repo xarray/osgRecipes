@@ -2,6 +2,7 @@ SET(EXTERNAL_INCLUDE_DIR ./agg)
 SET(EXAMPLE_NAME osgagg)
 SET(EXAMPLE_FILES
     osgagg.cpp
+    Drawer2D.cpp
     
     agg/agg_arc.cpp
     agg/agg_arrowhead.cpp
