@@ -156,6 +156,8 @@ int main( int argc, char** argv )
     
     osgViewer::Viewer viewer;
     viewer.setSceneData( scene.get() );
+    viewer.addEventHandler( new osgViewer::StatsHandler );
+    viewer.addEventHandler( new osgViewer::WindowSizeHandler );
 	viewer.setCameraManipulator( new osgGA::TrackballManipulator );
 	viewer.realize();
 	
