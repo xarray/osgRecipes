@@ -338,6 +338,7 @@ osg::Texture* EffectCompositor::createTextureFromXML( osgDB::XmlNode* xmlNode, b
     
     bool isBufferObject = (xmlNode->name.find("buffer") != std::string::npos);
     bool useRelativeSize = (atoi(xmlNode->properties["relative_size"].c_str()) > 0);
+    unsigned int levels = atoi( xmlNode->properties["max_levels"].c_str() );
     int w = _renderTargetResolution[0], h = _renderTargetResolution[1], d = _renderTargetResolution[2];
     if ( type=="1d" )
     {
@@ -347,6 +348,7 @@ osg::Texture* EffectCompositor::createTextureFromXML( osgDB::XmlNode* xmlNode, b
             if ( useRelativeSize ) w *= atof( xmlNode->properties["width"].c_str() );
             else w = atoi( xmlNode->properties["width"].c_str() );
             tex1D->setTextureWidth( w>0?w:_renderTargetResolution[0] );
+            if ( levels>0 ) tex1D->setNumMipmapLevels( levels );
         }
         texture = tex1D;
     }
@@ -360,6 +362,7 @@ osg::Texture* EffectCompositor::createTextureFromXML( osgDB::XmlNode* xmlNode, b
             if ( useRelativeSize ) h *= atof( xmlNode->properties["height"].c_str() );
             else h = atoi( xmlNode->properties["height"].c_str() );
             tex2D->setTextureSize( w>0?w:_renderTargetResolution[0], h>0?h:_renderTargetResolution[1] );
+            if ( levels>0 ) tex2D->setNumMipmapLevels( levels );
         }
         texture = tex2D;
     }
@@ -376,6 +379,7 @@ osg::Texture* EffectCompositor::createTextureFromXML( osgDB::XmlNode* xmlNode, b
             else d = atoi( xmlNode->properties["depth"].c_str() );
             tex2DArray->setTextureSize( w>0?w:_renderTargetResolution[0], h>0?h:_renderTargetResolution[1],
                                         d>0?d:_renderTargetResolution[2] );
+            if ( levels>0 ) tex2DArray->setNumMipmapLevels( levels );
         }
         texture = tex2DArray;
     }
@@ -408,6 +412,7 @@ osg::Texture* EffectCompositor::createTextureFromXML( osgDB::XmlNode* xmlNode, b
             else d = atoi( xmlNode->properties["depth"].c_str() );
             tex3D->setTextureSize( w>0?w:_renderTargetResolution[0], h>0?h:_renderTargetResolution[1],
                                    d>0?d:_renderTargetResolution[1] );
+            if ( levels>0 ) tex3D->setNumMipmapLevels( levels );
         }
         texture = tex3D;
     }
@@ -434,6 +439,7 @@ osg::Texture* EffectCompositor::createTextureFromXML( osgDB::XmlNode* xmlNode, b
             if ( useRelativeSize ) h *= atof( xmlNode->properties["height"].c_str() );
             else h = atoi( xmlNode->properties["height"].c_str() );
             texCubemap->setTextureSize( w>0?w:_renderTargetResolution[0], h>0?h:_renderTargetResolution[1] );
+            if ( levels>0 ) texCubemap->setNumMipmapLevels( levels );
         }
         texture = texCubemap;
     }

@@ -112,24 +112,31 @@ ADD_SUBDIRECTORY(osgdb_otl)           # OSG & Oracle/ODBC/DB2 Template Library
 # Wave 3
 ADD_SUBDIRECTORY(osgagg)              # OSG & AGG
 ADD_SUBDIRECTORY(osgalvar)            # OSG & ALVAR
+ADD_SUBDIRECTORY(osgcef)              # OSG & ChromeEmbedded
 ADD_SUBDIRECTORY(osgdb_physfs)        # OSG & PhysicsFS
 ADD_SUBDIRECTORY(osgdirectwrite)      # OSG & Microsoft DirectWrite
 ADD_SUBDIRECTORY(osgperceptual)       # OSG & Intel Perceptual Computing SDK
 ADD_SUBDIRECTORY(osgswiftpp)          # OSG & Swift++
-ADD_SUBDIRECTORY(osgsmartbody)        # OSG & SmartBody
 ADD_SUBDIRECTORY(osgsilverlining)     # OSG & Sundog Silverlining
 ADD_SUBDIRECTORY(osgtriton)           # OSG & Sundog Triton Ocean
+
+# Wave 4
+#ADD_SUBDIRECTORY(osgdb_cdr)           # OSG & libCDR
+#ADD_SUBDIRECTORY(osggameswf)          # OSG & GameSWF
+#ADD_SUBDIRECTORY(osghavokphysics)     # OSG & Havok Physics (from AnarchySDK)
+#ADD_SUBDIRECTORY(osgmupdf)            # OSG & MuPDF
+#ADD_SUBDIRECTORY(osgnvfx)             # OSG & nvFX
+#ADD_SUBDIRECTORY(osgois)              # OSG & OIS
+#ADD_SUBDIRECTORY(osgrecast)           # OSG & Recastnavigation
+#ADD_SUBDIRECTORY(osgsmartbody)        # OSG & SmartBody
+#ADD_SUBDIRECTORY(osgwoody3d)          # OSG & Woody3D
 
 # TODO List
 #ADD_SUBDIRECTORY(osgberkelium)        # OSG & Berkelium
 #ADD_SUBDIRECTORY(osgguichan)          # OSG & GUIChan
-#ADD_SUBDIRECTORY(osgnvfx)             # OSG & nvFX
-#ADD_SUBDIRECTORY(osgrecast)           # OSG & Recastnavigation
 #ADD_SUBDIRECTORY(osgcl)               # OSG & OpenCL
-#ADD_SUBDIRECTORY(osgois)              # OSG & OIS
+#ADD_SUBDIRECTORY(osgcsg)              # OSG & OpenCSG
 #ADD_SUBDIRECTORY(osgcrogai)           # OSG & Crogai
-#ADD_SUBDIRECTORY(osgdb_cdr)           # OSG & libCDR
-#ADD_SUBDIRECTORY(osggameswf)          # OSG & GameSWF
 #ADD_SUBDIRECTORY(osggls)              # OSG & libGLS
 #ADD_SUBDIRECTORY(osgmathgl)           # OSG & MathGL
 #ADD_SUBDIRECTORY(osgnewton)           # OSG & Newton Physics
@@ -138,9 +145,7 @@ ADD_SUBDIRECTORY(osgtriton)           # OSG & Sundog Triton Ocean
 #ADD_SUBDIRECTORY(osganimata)          # OSG & Animata
 #ADD_SUBDIRECTORY(osgdance)            # OSG & DANCE
 #ADD_SUBDIRECTORY(osgmini)             # OSG & libMini
-#ADD_SUBDIRECTORY(osgmupdf)            # OSG & MuPDF
 #ADD_SUBDIRECTORY(osgsteers)           # OSG & OpenSteers
 #ADD_SUBDIRECTORY(osgroboop)           # OSG & ROBOOP
 #ADD_SUBDIRECTORY(osgrtmidi)           # OSG & RT-Midi
-#ADD_SUBDIRECTORY(osgwoody3d)          # OSG & Woody3D
 #ADD_SUBDIRECTORY(osgxaos)             # OSG & XaoS

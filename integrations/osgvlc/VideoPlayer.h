@@ -40,8 +40,8 @@ public:
     virtual void setReferenceTime( double time ) { libvlc_media_player_set_time(_vlcPlayer, (int)time); }
     virtual double getReferenceTime() const { return (int)libvlc_media_player_get_time(_vlcPlayer); }
     
-    virtual void setTimeMultiplier( double m ) { libvlc_video_set_scale(_vlcPlayer, m); }
-    virtual double getTimeMultiplier() const { return libvlc_video_get_scale(_vlcPlayer); }
+    virtual void setTimeMultiplier( double m ) { libvlc_media_player_set_rate(_vlcPlayer, m); }
+    virtual double getTimeMultiplier() const { return libvlc_media_player_get_rate(_vlcPlayer); }
     
     virtual void setVolume( float vol ) { libvlc_audio_set_volume(_vlcPlayer, (int)vol); }
     virtual float getVolume() const { return (int)libvlc_audio_get_volume(_vlcPlayer); }

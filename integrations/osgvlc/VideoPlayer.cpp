@@ -117,8 +117,11 @@ void VideoPlayer::play()
 
 void VideoPlayer::pause()
 {
-    libvlc_media_player_set_pause( _vlcPlayer, true );
-    _status = PAUSED;
+    if ( _status==PLAYING )
+    {
+        libvlc_media_player_set_pause( _vlcPlayer, true );
+        _status = PAUSED;
+    }
 }
 
 void VideoPlayer::rewind()
@@ -164,7 +167,7 @@ public:
         if ( !acceptsExtension(ext) ) return ReadResult::FILE_NOT_HANDLED;
         
         std::string url = osgDB::getNameLessExtension(file);
-        int w = 512, h = 512;
+        int w = 1024, h = 1024;
         
         osg::ref_ptr<VideoPlayer> image;
         if ( options )
