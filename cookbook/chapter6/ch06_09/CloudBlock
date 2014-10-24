@@ -7,6 +7,7 @@
 #define H_COOKBOOK_CH6_CLOUDBLOCK
 
 #include <osg/Drawable>
+#include <osg/Version>
 
 class CloudBlock : public osg::Drawable
 {
@@ -53,8 +54,13 @@ public:
     void setCloudCells( const CloudCells& cells ) { _cells = cells; dirtyBound(); }
     CloudCells& getCloudCells() { return _cells; }
     const CloudCells& getCloudCells() const { return _cells; }
-    
+
+#if OSG_VERSION_GREATER_THAN(3,2,1)
+    virtual osg::BoundingBox computeBoundingBox() const;
+#else
     virtual osg::BoundingBox computeBound() const;
+#endif
+
     virtual void drawImplementation( osg::RenderInfo& renderInfo ) const;
     
 protected:

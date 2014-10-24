@@ -7,6 +7,7 @@
 #define H_COOKBOOK_CH3_NURBSSURFACE
 
 #include <osg/Drawable>
+#include <osg/Version>
 
 class NurbsSurface : public osg::Drawable
 {
@@ -43,8 +44,12 @@ public:
     void setOrders( int s, int t ) { _sOrder = s; _tOrder = t; }
     int getSOrder() const { return _sOrder; }
     int getTOrder() const { return _tOrder; }
-    
+
+#if OSG_VERSION_GREATER_THAN(3,2,1)
+    virtual osg::BoundingBox computeBoundingBox() const;
+#else
     virtual osg::BoundingBox computeBound() const;
+#endif
     
     virtual void drawImplementation( osg::RenderInfo& renderInfo ) const;
     

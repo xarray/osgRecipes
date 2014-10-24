@@ -5,6 +5,7 @@
 
 #include <QtCore/QtCore>
 #include <QtGui/QtGui>
+#include <QtCore/QMutex>
 #include <osgDB/ReadFile>
 #include <osgGA/TrackballManipulator>
 #include <osgViewer/ViewerEventHandlers>

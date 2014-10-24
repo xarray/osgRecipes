@@ -24,7 +24,11 @@ NurbsSurface::~NurbsSurface()
 {
 }
 
+#if OSG_VERSION_GREATER_THAN(3,2,1)
+osg::BoundingBox NurbsSurface::computeBoundingBox() const
+#else
 osg::BoundingBox NurbsSurface::computeBound() const
+#endif
 {
     osg::BoundingBox bb;
     if ( _vertices.valid() )
