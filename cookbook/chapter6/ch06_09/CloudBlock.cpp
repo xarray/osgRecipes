@@ -19,7 +19,11 @@ CloudBlock::CloudBlock( const CloudBlock& copy, const osg::CopyOp& copyop )
 {
 }
 
+#if OSG_VERSION_GREATER_THAN(3,2,1)
+osg::BoundingBox CloudBlock::computeBoundingBox() const
+#else
 osg::BoundingBox CloudBlock::computeBound() const
+#endif
 {
     osg::BoundingBox bb;
     for ( CloudCells::const_iterator itr=_cells.begin(); itr!=_cells.end(); ++itr )
