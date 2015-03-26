@@ -30,6 +30,7 @@ public:
         if ( _drawable1.valid() ) content += "Drawable 1; ";
         if ( _drawable2.valid() ) content += "Drawable 2; ";
         if ( _text.valid() ) _text->setText( content );
+        traverse(node, nv);
     }
     
     osg::ref_ptr<osgText::Text> _text;
