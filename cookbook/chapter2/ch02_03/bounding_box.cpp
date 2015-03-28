@@ -33,6 +33,8 @@ public:
         trans->setMatrix(
             osg::Matrix::scale(bb.xMax()-bb.xMin(), bb.yMax()-bb.yMin(), bb.zMax()-bb.zMin()) *
             osg::Matrix::translate(bb.center()) );
+
+        traverse(node, nv);
     }
     
     osg::NodePath _nodesToCompute;
