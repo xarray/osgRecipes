@@ -29,7 +29,13 @@ SET(RECAST_SOURCE_FILES
     Recast/RecastRegion.cpp
 )
 
-SET(EXTERNAL_INCLUDE_DIR oscpack TUIO)
 SET(EXAMPLE_NAME osgrecast)
-SET(EXAMPLE_FILES osgrecast.cpp ${RECAST_SOURCE_FILES})
+SET(EXAMPLE_FILES
+    osgrecast.cpp
+    ChunkyTriMesh.cpp
+    ChunkyTriMesh.h
+    RecastManager.cpp
+    RecastManager.h
+    ${RECAST_SOURCE_FILES}
+)
 START_EXAMPLE()

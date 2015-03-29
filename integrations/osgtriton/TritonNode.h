@@ -16,7 +16,7 @@ class TritonNode : public osg::Geode
     {
     public:
         virtual void drawImplementation( osg::RenderInfo& renderInfo ) const;
-        virtual osg::BoundingBox computeBound() const;
+        virtual osg::BoundingSphere computeBound() const;
         
         OceanDrawable( TritonNode* s=NULL );
         OceanDrawable( const OceanDrawable& copy, const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY );

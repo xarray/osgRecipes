@@ -21,7 +21,7 @@ void SilverLiningNode::SkyDrawable::drawImplementation( osg::RenderInfo& renderI
     renderInfo.getState()->dirtyAllVertexArrays();
 }
 
-osg::BoundingBox SilverLiningNode::SkyDrawable::computeBound() const
+osg::BoundingSphere SilverLiningNode::SkyDrawable::computeBound() const
 {
     osg::BoundingBox skyBoundBox;
     if ( !_silverLining->isAtmosphereValid() ) return skyBoundBox;
@@ -77,7 +77,7 @@ void SilverLiningNode::CloudDrawable::drawImplementation( osg::RenderInfo& rende
     }*/
 }
 
-osg::BoundingBox SilverLiningNode::CloudDrawable::computeBound() const
+osg::BoundingSphere SilverLiningNode::CloudDrawable::computeBound() const
 {
     osg::BoundingBox cloudBoundBox;
     if ( !_silverLining->isAtmosphereValid() ) return cloudBoundBox;

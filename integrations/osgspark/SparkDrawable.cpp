@@ -171,7 +171,7 @@ bool SparkDrawable::update( double currentTime, const osg::Vec3d& eye )
     return active;
 }
 
-osg::BoundingBox SparkDrawable::computeBound() const
+osg::BoundingSphere SparkDrawable::computeBound() const
 {
     osg::BoundingBox bb;
     SPK::Vector3D min, max;

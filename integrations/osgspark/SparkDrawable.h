@@ -106,7 +106,7 @@ public:
     /** Update the system, will be called by the SparkUpdatingHandler */
     virtual bool update( double currentTime, const osg::Vec3d& eye );
     
-    virtual osg::BoundingBox computeBound() const;
+    virtual osg::BoundingSphere computeBound() const;
     virtual void drawImplementation( osg::RenderInfo& renderInfo ) const;
     
 protected:

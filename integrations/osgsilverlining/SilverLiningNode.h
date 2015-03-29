@@ -11,7 +11,7 @@ class SilverLiningNode : public osg::Geode
     {
     public:
         virtual void drawImplementation( osg::RenderInfo& renderInfo ) const;
-        virtual osg::BoundingBox computeBound() const;
+        virtual osg::BoundingSphere computeBound() const;
         
         SkyDrawable( SilverLiningNode* s=NULL );
         SkyDrawable( const SkyDrawable& copy, const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY );
@@ -25,7 +25,7 @@ class SilverLiningNode : public osg::Geode
     {
     public:
         virtual void drawImplementation( osg::RenderInfo& renderInfo ) const;
-        virtual osg::BoundingBox computeBound() const;
+        virtual osg::BoundingSphere computeBound() const;
         
         CloudDrawable( SilverLiningNode* s=NULL );
         CloudDrawable( const CloudDrawable& copy, const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY );

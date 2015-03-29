@@ -156,7 +156,7 @@ public:
                 text = createText( leftBottom, pd.name, 0.02f,
                     color, osgText::Text::TEXT|osgText::Text::BOUNDINGBOX );
             }
-            osg::BoundingBox bb = text->computeBound();
+            osg::BoundingBox bb = text->computeBoundingBox();
             float centerY = (bb.yMax() + bb.yMin()) * 0.5f;
             leftBottom = bb._min;
             rightTop = bb._max;

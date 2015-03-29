@@ -8,6 +8,8 @@
 #include <osgViewer/ViewerEventHandlers>
 #include <osgViewer/Viewer>
 
+#include "RecastManager.h"
+
 int main( int argc, char** argv )
 {
     osg::ref_ptr<osg::MatrixTransform> scene = new osg::MatrixTransform;

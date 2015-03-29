@@ -115,7 +115,7 @@ ADD_SUBDIRECTORY(osgalvar)            # OSG & ALVAR
 ADD_SUBDIRECTORY(osgcef)              # OSG & ChromeEmbedded
 ADD_SUBDIRECTORY(osgdb_physfs)        # OSG & PhysicsFS
 ADD_SUBDIRECTORY(osgdirectwrite)      # OSG & Microsoft DirectWrite
-ADD_SUBDIRECTORY(osgperceptual)       # OSG & Intel Perceptual Computing SDK
+ADD_SUBDIRECTORY(osgrecast)           # OSG & Recastnavigation
 ADD_SUBDIRECTORY(osgswiftpp)          # OSG & Swift++
 ADD_SUBDIRECTORY(osgsilverlining)     # OSG & Sundog Silverlining
 ADD_SUBDIRECTORY(osgtriton)           # OSG & Sundog Triton Ocean
@@ -127,7 +127,7 @@ ADD_SUBDIRECTORY(osgtriton)           # OSG & Sundog Triton Ocean
 #ADD_SUBDIRECTORY(osgmupdf)            # OSG & MuPDF
 #ADD_SUBDIRECTORY(osgnvfx)             # OSG & nvFX
 #ADD_SUBDIRECTORY(osgois)              # OSG & OIS
-#ADD_SUBDIRECTORY(osgrecast)           # OSG & Recastnavigation
+#ADD_SUBDIRECTORY(osgperceptual)       # OSG & Intel Perceptual Computing SDK
 #ADD_SUBDIRECTORY(osgsmartbody)        # OSG & SmartBody
 #ADD_SUBDIRECTORY(osgwoody3d)          # OSG & Woody3D
 
@@ -144,6 +144,7 @@ ADD_SUBDIRECTORY(osgtriton)           # OSG & Sundog Triton Ocean
 #ADD_SUBDIRECTORY(osgdb_nanosvg)       # OSG & NanoSVG
 #ADD_SUBDIRECTORY(osganimata)          # OSG & Animata
 #ADD_SUBDIRECTORY(osgdance)            # OSG & DANCE
+#ADD_SUBDIRECTORY(osgnanovg)           # OSG & NanoVG
 #ADD_SUBDIRECTORY(osgmini)             # OSG & libMini
 #ADD_SUBDIRECTORY(osgsteers)           # OSG & OpenSteers
 #ADD_SUBDIRECTORY(osgroboop)           # OSG & ROBOOP
