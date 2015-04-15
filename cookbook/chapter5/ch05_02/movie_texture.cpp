@@ -21,7 +21,7 @@ int main( int argc, char** argv )
     else
     {
 #ifdef WIN32
-        image = osgDB::readImageFile( "pic.png" );
+        image = osgDB::readImageFile( "0.ffmpeg", new osgDB::Options("format=vfwcap frame_rate=25") );
 #else
         image = osgDB::readImageFile( "/dev/video0.ffmpeg" );
 #endif

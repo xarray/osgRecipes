@@ -4,6 +4,9 @@
 #include <osg/TriangleFunctor>
 #include "RecastManager.h"
 
+namespace
+{
+
 struct GeometryDataCollector : public osg::NodeVisitor
 {
     GeometryDataCollector() : osg::NodeVisitor(osg::NodeVisitor::TRAVERSE_ALL_CHILDREN) {}
@@ -92,6 +95,8 @@ void GeometryDataCollector::apply( osg::Geode& node )
     traverse( node );
 }
 
+}
+
 /* RecastManager */
 
 RecastManager::RecastManager()
@@ -127,7 +132,7 @@ bool RecastManager::buildScene( osg::Node* node, int maxAgents, int chunkSize )
     node->accept( collector );
     
     // Create mesh data
-    unsigned int numVertices = collector.vertices.size();
+    unsigned int numVertices = collector.vertices.size() / 3;
     unsigned int numTriangles = collector.faces.size() / 3;
     if ( !numVertices || !numTriangles ) return false;
     if ( _chunkyMesh ) delete _chunkyMesh;
@@ -258,7 +263,8 @@ bool RecastManager::buildScene( osg::Node* node, int maxAgents, int chunkSize )
     params.offMeshConAreas = m_geom->getOffMeshConnectionAreas();
     params.offMeshConFlags = m_geom->getOffMeshConnectionFlags();
     params.offMeshConUserID = m_geom->getOffMeshConnectionId();
-    params.offMeshConCount = m_geom->getOffMeshConnectionCount();*/  // FIXME!!!!!!!!
+    params.offMeshConCount = m_geom->getOffMeshConnectionCount();*/
+    params.offMeshConCount = 0;  // FIXME!!!!!!!!
     params.walkableHeight = _agentHeight;
     params.walkableRadius = _agentRadius;
     params.walkableClimb = _agentMaxClimb;
@@ -296,7 +302,11 @@ bool RecastManager::buildScene( osg::Node* node, int maxAgents, int chunkSize )
     
     // Initialize crowd data
     _crowd = dtAllocCrowd();
-    _crowd->init( maxAgents, _agentRadius, _navMesh );
+    if ( !_crowd->init(maxAgents, _agentRadius, _navMesh) )
+    {
+        OSG_NOTICE << "[RecastManager] Could not initialize Detour crowd" << std::endl;
+        return false;
+    }
     //_crowd->getEditableFilter(0)->setExcludeFlags(??);
     
     // Setup local avoidance params to different qualities
