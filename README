@@ -61,6 +61,7 @@ The third-party libraries that can be embedded with OSG are listed here for down
 * OpenNI (natural interaction devices middleware, including Kinect): http://www.openni.org/
 * OTL (Oracle, Odbc and DB2-CLI template library): already included in the source code
 * PhysFS (PhysicsFS, provide abstract access to various archives): http://icculus.org/physfs/
+* RecastNavigation (Famous navigation-mesh toolset for games): https://github.com/memononen/recastnavigation
 * RVO2 (Reciprocal collision avoidance for multi-agent simulation): http://gamma.cs.unc.edu/RVO2/
 * Spark (a crossplatform particle engine): http://spark.developpez.com/
 * Sundog SilverLining & Triton (Weather & ocean rendering commercial middleware): http://www.sundog-soft.com
