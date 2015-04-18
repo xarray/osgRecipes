@@ -112,13 +112,13 @@ ADD_SUBDIRECTORY(osgdb_otl)           # OSG & Oracle/ODBC/DB2 Template Library
 # Wave 3
 ADD_SUBDIRECTORY(osgagg)              # OSG & AGG
 ADD_SUBDIRECTORY(osgalvar)            # OSG & ALVAR
-ADD_SUBDIRECTORY(osgcef)              # OSG & ChromeEmbedded
-ADD_SUBDIRECTORY(osgdb_physfs)        # OSG & PhysicsFS
 ADD_SUBDIRECTORY(osgdirectwrite)      # OSG & Microsoft DirectWrite
 ADD_SUBDIRECTORY(osgrecast)           # OSG & Recastnavigation
+ADD_SUBDIRECTORY(osgnanovg)           # OSG & NanoVG
 ADD_SUBDIRECTORY(osgswiftpp)          # OSG & Swift++
 ADD_SUBDIRECTORY(osgsilverlining)     # OSG & Sundog Silverlining
 ADD_SUBDIRECTORY(osgtriton)           # OSG & Sundog Triton Ocean
+ADD_SUBDIRECTORY(osgdb_physfs)        # OSG & PhysicsFS
 
 # TODO List
 #ADD_SUBDIRECTORY(osgdb_cdr)           # OSG & libCDR
@@ -144,7 +144,7 @@ ADD_SUBDIRECTORY(osgtriton)           # OSG & Sundog Triton Ocean
 #ADD_SUBDIRECTORY(osgdb_nanosvg)       # OSG & NanoSVG
 #ADD_SUBDIRECTORY(osganimata)          # OSG & Animata
 #ADD_SUBDIRECTORY(osgdance)            # OSG & DANCE
-#ADD_SUBDIRECTORY(osgnanovg)           # OSG & NanoVG
+#ADD_SUBDIRECTORY(osgcef)              # OSG & ChromeEmbedded
 #ADD_SUBDIRECTORY(osgmini)             # OSG & libMini
 #ADD_SUBDIRECTORY(osgsteers)           # OSG & OpenSteers
 #ADD_SUBDIRECTORY(osgroboop)           # OSG & ROBOOP

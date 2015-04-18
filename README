@@ -56,6 +56,7 @@ The third-party libraries that can be embedded with OSG are listed here for down
 * Microsoft DirectWrite (a text-layout and glyph-rendering API): in the Windows SDK
 * Microsoft Kinect SDK: http://www.microsoft.com/en-us/kinectforwindows/develop/developer-downloads.aspx
 * MyGUI (a fast, flexible and simple GUI): http://mygui.info/
+* NanoVG (Antialiased 2D vector drawing library): https://github.com/memononen/nanovg
 * ngPlant (a plant modeling software): core library already included in the source code
 * NVIDIA PhysX (a well-rounded physics engine, version 3.2): http://developer.nvidia.com/physx-downloads
 * OpenNI (natural interaction devices middleware, including Kinect): http://www.openni.org/
