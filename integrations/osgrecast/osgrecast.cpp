@@ -7,7 +7,7 @@
 #include <osgGA/StateSetManipulator>
 #include <osgViewer/ViewerEventHandlers>
 #include <osgViewer/Viewer>
-
+#include <osg/io_utils>
 #include "RecastManager.h"
 
 class SimulationHandler : public osgGA::GUIEventHandler
@@ -16,7 +16,7 @@ public:
     SimulationHandler( osg::MatrixTransform* s )
     :   _scene(s), _lastSimulationTime(0.0)
     {
-        _recast = new RecastManager;
+        _recast = new RecastManager( osg::Matrix::rotate(-osg::PI_2, osg::X_AXIS) );
         _recast->buildScene( s );
         
         _agentShape = new osg::Geode;
@@ -33,7 +33,8 @@ public:
             _recast->update( time - _lastSimulationTime );
             _lastSimulationTime = time;
         }
-        else if ( ea.getEventType()==osgGA::GUIEventAdapter::RELEASE )
+        else if ( ea.getEventType()==osgGA::GUIEventAdapter::RELEASE ||
+                  ea.getEventType()==osgGA::GUIEventAdapter::DOUBLECLICK )
         {
             osgUtil::LineSegmentIntersector::Intersections intersections;
             if ( view->computeIntersections(ea.getX(), ea.getY(), intersections) )
@@ -49,7 +50,7 @@ public:
                     _scene->addChild( agent.get() );
                     _recast->addAgent( pt, agent.get() );
                 }
-                else
+                else if ( ea.getEventType()==osgGA::GUIEventAdapter::DOUBLECLICK )
                     _recast->moveTo( pt );
             }
         }
@@ -66,7 +67,7 @@ protected:
 int main( int argc, char** argv )
 {
     osg::ref_ptr<osg::MatrixTransform> scene = new osg::MatrixTransform;
-    scene->addChild( osgDB::readNodeFile("nav_test.obj.0,0,90.rot") );
+    scene->addChild( osgDB::readNodeFile("nav_test.obj") );
     scene->getOrCreateStateSet()->setMode( GL_CULL_FACE, osg::StateAttribute::ON );
     
     osgViewer::Viewer viewer;

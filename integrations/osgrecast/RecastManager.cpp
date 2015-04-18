@@ -9,7 +9,8 @@ namespace
 
 struct GeometryDataCollector : public osg::NodeVisitor
 {
-    GeometryDataCollector() : osg::NodeVisitor(osg::NodeVisitor::TRAVERSE_ALL_CHILDREN) {}
+    GeometryDataCollector( const osg::Matrix& matrix )
+    : osg::NodeVisitor(osg::NodeVisitor::TRAVERSE_ALL_CHILDREN), _offset(matrix) {}
     
     virtual void apply( osg::Transform& transform );
     virtual void apply( osg::Geode& node );
@@ -23,6 +24,7 @@ struct GeometryDataCollector : public osg::NodeVisitor
     std::vector<float> vertices;
     std::vector<int> faces;
     osg::BoundingBoxf bound;
+    osg::Matrix _offset;
     
     typedef std::vector<osg::Matrix> MatrixStack;
     MatrixStack _matrixStack;
@@ -72,8 +74,8 @@ void GeometryDataCollector::apply( osg::Transform& transform )
 
 void GeometryDataCollector::apply( osg::Geode& node )
 {
-    osg::Matrix matrix;
-    if ( _matrixStack.size()>0 ) matrix =_matrixStack.back();
+    osg::Matrix matrix = _offset;
+    if ( _matrixStack.size()>0 ) matrix *= _matrixStack.back();
     for ( unsigned int i=0; i<node.getNumDrawables(); ++i )
     {
         osg::Geometry* geom = node.getDrawable(i)->asGeometry();
@@ -99,11 +101,14 @@ void GeometryDataCollector::apply( osg::Geode& node )
 
 /* RecastManager */
 
-RecastManager::RecastManager()
+RecastManager::RecastManager( const osg::Matrix& matrix )
 :   _chunkyMesh(NULL), _mesh(NULL), _detailMesh(NULL),
     _navMesh(NULL), _navQuery(NULL), _crowd(NULL),
     _agentHeight(2.0f), _agentRadius(0.6f), _agentMaxClimb(0.9f)
 {
+    _globalOffset = matrix;
+    _globalOffsetInv = osg::Matrix::inverse(matrix);
+    
     memset( &_config, 0, sizeof(_config) );
     _config.cs = 0.3f;
     _config.ch = 0.2f;
@@ -128,7 +133,7 @@ RecastManager::~RecastManager()
 bool RecastManager::buildScene( osg::Node* node, int maxAgents, int chunkSize )
 {
     if ( !node || chunkSize<=0 ) return false;
-    GeometryDataCollector collector;
+    GeometryDataCollector collector(_globalOffset);
     node->accept( collector );
     
     // Create mesh data
@@ -236,13 +241,26 @@ bool RecastManager::buildScene( osg::Node* node, int maxAgents, int chunkSize )
     rcFreeCompactHeightfield( compact );
     rcFreeContourSet( contourSet );
     
-    // Create Detour data from Recast poly mesh
+    // Only build the detour nav-mesh if we do not exceed the limit of maximum points per polygon
     if ( _config.maxVertsPerPoly>DT_VERTS_PER_POLYGON )
     {
         OSG_NOTICE << "[RecastManager] Too many points per polygon for Detour to handle" << std::endl;
         return false;
     }
     
+    // Update poly flags from areas (which can be marked before optionally)
+    for ( int i=0; i<_mesh->npolys; ++i )
+    {
+        if ( _mesh->areas[i]==RC_WALKABLE_AREA )
+            _mesh->flags[i] = POLYFLAGS_WALK;
+        
+        /*if ( _mesh->areas[i]==POLYAREA_WATER )
+            _mesh->flags[i] = POLYFLAGS_SWIM;
+        else if ( _mesh->areas[i]==POLYAREA_DOOR )
+            _mesh->flags[i] = POLYFLAGS_WALK | POLYFLAGS_DOOR;*/
+    }
+    
+    // Create Detour data from Recast poly mesh
     dtNavMeshCreateParams params;
     memset( &params, 0, sizeof(params) );
     params.verts = _mesh->verts;
@@ -264,7 +282,6 @@ bool RecastManager::buildScene( osg::Node* node, int maxAgents, int chunkSize )
     params.offMeshConFlags = m_geom->getOffMeshConnectionFlags();
     params.offMeshConUserID = m_geom->getOffMeshConnectionId();
     params.offMeshConCount = m_geom->getOffMeshConnectionCount();*/
-    params.offMeshConCount = 0;  // FIXME!!!!!!!!
     params.walkableHeight = _agentHeight;
     params.walkableRadius = _agentRadius;
     params.walkableClimb = _agentMaxClimb;
@@ -307,7 +324,9 @@ bool RecastManager::buildScene( osg::Node* node, int maxAgents, int chunkSize )
         OSG_NOTICE << "[RecastManager] Could not initialize Detour crowd" << std::endl;
         return false;
     }
-    //_crowd->getEditableFilter(0)->setExcludeFlags(??);
+    
+    // Make polygons with 'disabled' flag invalid
+    _crowd->getEditableFilter(0)->setExcludeFlags( POLYFLAGS_DISABLED );
     
     // Setup local avoidance params to different qualities
     {
@@ -364,7 +383,7 @@ void RecastManager::update( float deltaTime )
         const float* pos = ag->npos;
         
         osg::Matrix matrix = itr->first->getMatrix();
-        matrix.setTrans( osg::Vec3(pos[0], pos[1], pos[2]) );
+        matrix.setTrans( osg::Vec3(pos[0], pos[1], pos[2]) * _globalOffsetInv );
         itr->first->setMatrix( matrix );
     }
 }
@@ -391,7 +410,7 @@ int RecastManager::addAgent( const osg::Vec3f& pos, osg::MatrixTransform* node,
                      DT_CROWD_OPTIMIZE_TOPO|DT_CROWD_OBSTACLE_AVOIDANCE;
     ap.obstacleAvoidanceType = (unsigned char)3;
     ap.separationWeight = 2.0f;
-    int id = _crowd->addAgent( pos.ptr(), &ap );
+    int id = _crowd->addAgent( (pos * _globalOffset).ptr(), &ap );
     if ( id!=-1 ) _agentMap[node] = AgentData(id);
     return id;
 }
@@ -405,12 +424,13 @@ void RecastManager::removeAgent( osg::MatrixTransform* node )
 
 void RecastManager::moveTo( const osg::Vec3f& pos, osg::MatrixTransform* node )
 {
-    const dtQueryFilter* filter = _crowd->getFilter();
+    const dtQueryFilter* filter = _crowd->getFilter(0);
     const float* ext = _crowd->getQueryExtents();
     
     dtPolyRef targetRef;
     float targetPos[3];
-    _navQuery->findNearestPoly( pos.ptr(), ext, filter, &targetRef, targetPos );
+    _navQuery->findNearestPoly( (pos * _globalOffset).ptr(), ext, filter,
+                                &targetRef, targetPos );
     if ( !node )
     {
         for ( int i=0; i<_crowd->getAgentCount(); ++i )

@@ -12,7 +12,18 @@
 class RecastManager : public osg::Referenced
 {
 public:
-    RecastManager();
+    enum PolyFlags
+    {
+        POLYFLAGS_WALK = 0x01,        // Ability to walk (ground, grass, road)
+        POLYFLAGS_SWIM = 0x02,        // Ability to swim (water).
+        POLYFLAGS_DOOR = 0x04,        // Ability to move through doors.
+        POLYFLAGS_JUMP = 0x08,        // Ability to jump.
+        POLYFLAGS_DISABLED = 0x10,    // Disabled polygon
+        POLYFLAGS_ALL = 0xffff        // All abilities.
+    };
+    
+    /** We may have to set an offset matrix because Recast uses Y-axis as the height */
+    RecastManager( const osg::Matrix& globalOffset );
     
     /** Build new navigation scene from node, all configurations should be done before this method */
     bool buildScene( osg::Node* node, int maxAgents=128, int chunkSize=256 );
@@ -44,6 +55,7 @@ protected:
     dtNavMesh* _navMesh;
     dtNavMeshQuery* _navQuery;
     dtCrowd* _crowd;
+    osg::Matrix _globalOffset, _globalOffsetInv;
     float _meshBoundMin[3], _meshBoundMax[3];
     float _agentHeight, _agentRadius, _agentMaxClimb;
     
