@@ -1,6 +1,7 @@
 #ifndef H_TRITONNODE
 #define H_TRITONNODE
 
+#include <osg/Version>
 #include <osg/Geode>
 #include <Triton.h>
 
@@ -16,7 +17,11 @@ class TritonNode : public osg::Geode
     {
     public:
         virtual void drawImplementation( osg::RenderInfo& renderInfo ) const;
-        virtual osg::BoundingSphere computeBound() const;
+#if OSG_MIN_VERSION_REQUIRED(3,3,2)
+        virtual osg::BoundingBox computeBoundingBox() const;
+#else
+        virtual osg::BoundingBox computeBound() const;
+#endif
         
         OceanDrawable( TritonNode* s=NULL );
         OceanDrawable( const OceanDrawable& copy, const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY );

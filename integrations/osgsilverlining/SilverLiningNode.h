@@ -1,6 +1,7 @@
 #ifndef H_SILVERLININGNODE
 #define H_SILVERLININGNODE
 
+#include <osg/Version>
 #include <osg/Geode>
 #include <osg/Texture>
 #include <SilverLining.h>
@@ -11,7 +12,11 @@ class SilverLiningNode : public osg::Geode
     {
     public:
         virtual void drawImplementation( osg::RenderInfo& renderInfo ) const;
-        virtual osg::BoundingSphere computeBound() const;
+#if OSG_MIN_VERSION_REQUIRED(3,3,2)
+        virtual osg::BoundingBox computeBoundingBox() const;
+#else
+        virtual osg::BoundingBox computeBound() const;
+#endif
         
         SkyDrawable( SilverLiningNode* s=NULL );
         SkyDrawable( const SkyDrawable& copy, const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY );
@@ -25,7 +30,11 @@ class SilverLiningNode : public osg::Geode
     {
     public:
         virtual void drawImplementation( osg::RenderInfo& renderInfo ) const;
-        virtual osg::BoundingSphere computeBound() const;
+#if OSG_MIN_VERSION_REQUIRED(3,3,2)
+        virtual osg::BoundingBox computeBoundingBox() const;
+#else
+        virtual osg::BoundingBox computeBound() const;
+#endif
         
         CloudDrawable( SilverLiningNode* s=NULL );
         CloudDrawable( const CloudDrawable& copy, const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY );

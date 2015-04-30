@@ -64,7 +64,11 @@ void TritonNode::OceanDrawable::drawImplementation( osg::RenderInfo& renderInfo 
     state->dirtyAllVertexArrays();
 }
 
-osg::BoundingSphere TritonNode::OceanDrawable::computeBound() const
+#if OSG_MIN_VERSION_REQUIRED(3,3,2)
+osg::BoundingBox TritonNode::OceanDrawable::computeBoundingBox() const
+#else
+osg::BoundingBox TritonNode::OceanDrawable::computeBound() const
+#endif
 {
     osg::BoundingBox bbox;
     if ( _oceanMeshes.size()>0 )
