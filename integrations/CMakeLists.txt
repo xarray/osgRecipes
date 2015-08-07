@@ -123,6 +123,7 @@ ADD_SUBDIRECTORY(osgdb_physfs)        # OSG & PhysicsFS
 # Wave 4
 ADD_SUBDIRECTORY(osgcef)              # OSG & ChromeEmbedded
 ADD_SUBDIRECTORY(osgflex)             # OSG & NVIDIA Flex
+ADD_SUBDIRECTORY(osgshadowworks)      # OSG & NVIDIA HBAO+
 
 # TODO List
 #ADD_SUBDIRECTORY(osgdb_cdr)           # OSG & libCDR
@@ -144,6 +145,7 @@ ADD_SUBDIRECTORY(osgflex)             # OSG & NVIDIA Flex
 #ADD_SUBDIRECTORY(osgnewton)           # OSG & Newton Physics
 #ADD_SUBDIRECTORY(osgnurbs)            # OSG & openNURBS
 #ADD_SUBDIRECTORY(osgcuvid)            # OSG & NVIDIA Cuvid
+#ADD_SUBDIRECTORY(osggiworks)          # OSG & NVIDIA VXGI (Global Illumination)
 #ADD_SUBDIRECTORY(osgdb_nanosvg)       # OSG & NanoSVG
 #ADD_SUBDIRECTORY(osganimata)          # OSG & Animata
 #ADD_SUBDIRECTORY(osgdance)            # OSG & DANCE
