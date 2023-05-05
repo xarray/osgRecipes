@@ -36,12 +36,12 @@ public:
         SilverLining::LocalTime t;
         t.SetFromSystemTime();
         t.SetHour( 15.0 );
-        t.SetTimeZone( PST );
+        t.SetTimeZone(SilverLining::PST );
         _atmosphere->GetConditions()->SetTime( t );
         
         // Create cloud layers
         SilverLining::CloudLayer* cumulusCongestusLayer =
-            SilverLining::CloudLayerFactory::Create( CUMULUS_CONGESTUS );
+            SilverLining::CloudLayerFactory::Create(CloudTypes::CUMULUS_CONGESTUS,*_atmosphere);
         cumulusCongestusLayer->SetIsInfinite( true );
         cumulusCongestusLayer->SetBaseAltitude( 500 );
         cumulusCongestusLayer->SetThickness( 200 );
